@@ -121,17 +121,23 @@ public sealed class SecretStore(string path)
     }
 }
 
-/// <summary>Démarrage avec Windows via HKCU\…\Run (aucun droit administrateur nécessaire).</summary>
-public sealed class StartupService(string executablePath)
+/// <summary>
+/// Démarrage avec Windows : HKCU\…\Run (aucun droit administrateur nécessaire), ou tâche de démarrage du manifeste
+/// pour la version empaquetée (Microsoft Store), dont les écritures de registre sont virtualisées.
+/// </summary>
+public sealed class StartupService(string executablePath, bool packaged = false)
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string ValueName = "ZogmaDeck";
 
     private string Command => $"\"{executablePath}\" --tray";
 
+    public bool IsPackaged => packaged;
+
     /// <summary>Supprime l'entrée de démarrage de l'ancien nom (PocketDeck). Retourne true si elle existait.</summary>
     public bool RemoveLegacyEntry()
     {
+        if (packaged) return false;
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
@@ -148,6 +154,18 @@ public sealed class StartupService(string executablePath)
 
     public bool IsEnabled()
     {
+        if (packaged)
+        {
+            try
+            {
+                return PackagedStartupTask.GetState() is PackagedStartupTask.State.Enabled or PackagedStartupTask.State.EnabledByPolicy;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("Lecture de la tâche de démarrage impossible", ex);
+                return false;
+            }
+        }
         using var key = Registry.CurrentUser.OpenSubKey(RunKey);
         return key?.GetValue(ValueName) is string s && s.Equals(Command, StringComparison.OrdinalIgnoreCase);
     }
@@ -155,6 +173,7 @@ public sealed class StartupService(string executablePath)
     /// <returns>Message d'erreur, ou null en cas de succès.</returns>
     public string? SetEnabled(bool enabled)
     {
+        if (packaged) return SetTaskEnabled(enabled);
         try
         {
             using var key = Registry.CurrentUser.CreateSubKey(RunKey, writable: true);
@@ -166,6 +185,29 @@ public sealed class StartupService(string executablePath)
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
         {
             Log.Warn("Modification du démarrage automatique impossible", ex);
+            return "Impossible de modifier le démarrage automatique : " + ex.Message;
+        }
+    }
+
+    private static string? SetTaskEnabled(bool enabled)
+    {
+        try
+        {
+            var state = enabled ? PackagedStartupTask.RequestEnable() : PackagedStartupTask.Disable();
+            Log.Info($"Tâche de démarrage : {state}");
+            return state switch
+            {
+                PackagedStartupTask.State.Enabled when enabled => null,
+                PackagedStartupTask.State.Disabled when !enabled => null,
+                PackagedStartupTask.State.DisabledByUser when enabled =>
+                    "Le démarrage de ZogmaDeck a été désactivé dans Paramètres Windows › Applications › Démarrage : réactivez-le à cet endroit.",
+                PackagedStartupTask.State.DisabledByUser => null,
+                _ => "Le démarrage automatique est imposé par une stratégie de l'organisation.",
+            };
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Modification de la tâche de démarrage impossible", ex);
             return "Impossible de modifier le démarrage automatique : " + ex.Message;
         }
     }

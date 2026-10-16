@@ -161,7 +161,9 @@ public sealed class SettingsViewModel : ObservableObject
     public string DataDirectory => _rt.Paths.DataDirectory;
     public string StorageMode => _rt.Paths.IsPortable
         ? "Mode portable : les données sont à côté de l'exécutable."
-        : $"Pour un usage portable, créez un fichier vide « {AppPaths.PortableMarker} » à côté de ZogmaDeck.exe.";
+        : _rt.Startup.IsPackaged
+            ? "Version Microsoft Store : Windows conserve ces données dans l'espace privé de l'application (supprimées à la désinstallation)."
+            : $"Pour un usage portable, créez un fichier vide « {AppPaths.PortableMarker} » à côté de ZogmaDeck.exe.";
 
     internal static void OpenFolder(string path)
     {

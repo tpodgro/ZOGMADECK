@@ -56,6 +56,23 @@ téléchargé (« Informations complémentaires » › « Exécuter quand même 
 Une fois un certificat obtenu : `.\build.ps1 -CertThumbprint <empreinte>` signe l'exécutable puis l'installateur
 (horodatage DigiCert par défaut), ou `-SignCommand '<commande signtool avec {file}>'` pour Azure Artifact Signing.
 
+### Microsoft Store (MSIX)
+
+`.\build.ps1 -Task msix` produit `artifacts\ZogmaDeck-<version>-x64.msix` (~59 Mo) avec l'identité réservée dans
+Partner Center ([`packaging/msix/AppxManifest.xml`](packaging/msix/AppxManifest.xml)). Les outils `makeappx`/`makepri`
+viennent du SDK Windows s'il est installé, sinon du paquet NuGet officiel `Microsoft.Windows.SDK.BuildTools`, téléchargé
+dans `artifacts\tools`. Différences de la version empaquetée :
+
+- les fichiers sont publiés séparément, sans exécutable unique : rien n'est extrait au lancement et les mises à jour sont
+  différentielles ;
+- le démarrage avec Windows utilise la tâche de démarrage du manifeste (`Windows.ApplicationModel.StartupTask`, appelée
+  par COM sans projection WinRT), car les écritures dans `HKCU\…\Run` d'une application empaquetée sont virtualisées ;
+  l'utilisateur peut aussi la gérer dans Paramètres › Applications › Démarrage ;
+- les nouveaux fichiers de `%APPDATA%\ZogmaDeck` sont conservés par Windows dans l'espace privé de l'application.
+
+Soumission, textes de la fiche et justification de `runFullTrust` : [docs/STORE.md](docs/STORE.md). Politique de
+confidentialité : [docs/PRIVACY.md](docs/PRIVACY.md).
+
 Commandes équivalentes : `dotnet build ZogmaDeck.slnx`, `dotnet test --project tests/ZogmaDeck.Tests`,
 `dotnet publish src/ZogmaDeck.App -c Release -r win-x64 -o artifacts\ZogmaDeck`.
 

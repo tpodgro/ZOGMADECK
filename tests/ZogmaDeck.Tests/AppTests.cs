@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using System.Windows.Media;
 using ZogmaDeck.Helpers;
 using ZogmaDeck.Services;
@@ -167,5 +168,41 @@ public class LegacyMigrationTests
     {
         using var dir = new TempDir();
         Assert.Null(AppPaths.MigrateLegacyData(Path.Combine(dir.Path, "absent"), Path.Combine(dir.Path, "ZogmaDeck")));
+    }
+}
+
+public class MsixPackageTests
+{
+    private static readonly XNamespace Foundation = "http://schemas.microsoft.com/appx/manifest/foundation/windows10";
+    private static readonly XNamespace Desktop = "http://schemas.microsoft.com/appx/manifest/desktop/windows10";
+    private static readonly XNamespace Uap10 = "http://schemas.microsoft.com/appx/manifest/uap/windows10/10";
+
+    private static XDocument LoadManifest([System.Runtime.CompilerServices.CallerFilePath] string source = "")
+    {
+        var root = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(source)!, "..", ".."));
+        return XDocument.Load(Path.Combine(root, "packaging", "msix", "AppxManifest.xml"));
+    }
+
+    [Fact]
+    public void Manifest_MatchesStoreIdentity_AndStartupTaskId()
+    {
+        var doc = LoadManifest();
+        var identity = doc.Root!.Element(Foundation + "Identity")!;
+        Assert.Equal("TOMAZKI.ZogmaDeck", identity.Attribute("Name")!.Value);
+        Assert.Equal("CN=683599A3-0189-4C97-92C8-4F14962DC73A", identity.Attribute("Publisher")!.Value);
+        Assert.Equal("TOMAZKI", doc.Root.Element(Foundation + "Properties")!.Element(Foundation + "PublisherDisplayName")!.Value);
+
+        // La tâche de démarrage appelée par le code est celle du manifeste, et elle lance l'application en mode discret.
+        var task = doc.Descendants(Desktop + "StartupTask").Single();
+        Assert.Equal(PackagedStartupTask.TaskId, task.Attribute("TaskId")!.Value);
+        var trayApp = task.Ancestors(Foundation + "Application").Single();
+        Assert.Equal("--tray", trayApp.Attribute(Uap10 + "Parameters")!.Value);
+    }
+
+    [Fact]
+    public void NotPackaged_WhenRunFromTests()
+    {
+        Assert.False(PackageInfo.IsPackaged);
+        Assert.False(new StartupService(@"C:\x\ZogmaDeck.exe").IsPackaged);
     }
 }

@@ -75,7 +75,7 @@ public partial class App : Application
         Log.Initialize(paths.LogDirectory);
         if (paths.MigratedFrom is { } legacy) Log.Info($"Données reprises de l'ancien nom (PocketDeck) : {legacy}");
         Log.Info($"Démarrage de ZogmaDeck {typeof(App).Assembly.GetName().Version?.ToString(3)} — {RuntimeInformation.FrameworkDescription} — " +
-                 $"données : {paths.DataDirectory}{(paths.IsPortable ? " (portable)" : "")}");
+                 $"données : {paths.DataDirectory}{(paths.IsPortable ? " (portable)" : "")}{(PackageInfo.IsPackaged ? " (paquet MSIX)" : "")}");
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, ev) => Log.Error("Exception non gérée (fatale)", ev.ExceptionObject as Exception);
         TaskScheduler.UnobservedTaskException += (_, ev) =>
@@ -103,7 +103,7 @@ public partial class App : Application
         DeckRuntime? rt = null;
         var obs = new ObsClient(new ClientWebSocketFactory(), () => rt!.GetObsEndpoint(), () => secrets.Get(SecretStore.ObsPasswordKey));
         rt = new DeckRuntime(config, store, paths, obs, secrets, new AudioService(), _focus, new InputService(), new ShellService(), _hotkey,
-            new StartupService(paths.ExecutablePath), theme);
+            new StartupService(paths.ExecutablePath, PackageInfo.IsPackaged), theme);
         _rt = rt;
         if (load.Config is null || load.Warnings.Count > 0) rt.SaveNow();
 
@@ -132,7 +132,9 @@ public partial class App : Application
         if (rt.Startup.RemoveLegacyEntry() && !config.Settings.StartWithWindows) config.Settings.StartWithWindows = true;
         // Entrée créée par l'installateur (option « Lancer ZogmaDeck à l'ouverture de session ») : le réglage la reflète.
         else if (!config.Settings.StartWithWindows && rt.Startup.IsEnabled()) config.Settings.StartWithWindows = true;
-        if (config.Settings.StartWithWindows && !rt.Startup.IsEnabled()) rt.Startup.SetEnabled(true);
+        // Démarrage refusé (désactivé par l'utilisateur dans Paramètres Windows, stratégie…) : le réglage reflète l'état réel.
+        if (config.Settings.StartWithWindows && !rt.Startup.IsEnabled() && rt.Startup.SetEnabled(true) is not null)
+            config.Settings.StartWithWindows = false;
 
         if (config.Settings.Obs.ConnectOnStartup) _ = ConnectObsOnceAsync(obs);
 
