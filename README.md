@@ -68,7 +68,12 @@ dans `artifacts\tools`. Différences de la version empaquetée :
 - le démarrage avec Windows utilise la tâche de démarrage du manifeste (`Windows.ApplicationModel.StartupTask`, appelée
   par COM sans projection WinRT), car les écritures dans `HKCU\…\Run` d'une application empaquetée sont virtualisées ;
   l'utilisateur peut aussi la gérer dans Paramètres › Applications › Démarrage ;
-- les nouveaux fichiers de `%APPDATA%\ZogmaDeck` sont conservés par Windows dans l'espace privé de l'application.
+  la tâche est déclarée sur l'application principale (Windows ne la rend visible qu'à l'application qui la déclare) et
+  un lancement par cette tâche se reconnaît au type d'activation (`AppInstance.GetActivatedEventArgs`) : démarrage
+  discret dans la zone de notification, comme `--tray` ;
+- les fichiers déjà présents dans `%APPDATA%\ZogmaDeck` sont utilisés et mis à jour à leur emplacement ; ceux que la
+  version empaquetée crée elle-même sont conservés par Windows dans son espace privé ;
+- les programmes lancés depuis ZogmaDeck s'exécutent hors du paquet, sans virtualisation (vérifié).
 
 Soumission, textes de la fiche et justification de `runFullTrust` : [docs/STORE.md](docs/STORE.md). Politique de
 confidentialité : [docs/PRIVACY.md](docs/PRIVACY.md).

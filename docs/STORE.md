@@ -110,6 +110,18 @@ de `tools/generate-icons.py` si demandé.
 ## 3. Après publication
 
 - Les mises à jour se publient en créant une nouvelle soumission avec un paquet de version supérieure.
-- Les utilisateurs de l'installateur ou de la version portable gardent leurs données dans `%APPDATA%\ZogmaDeck` ; la
-  version Store les lit à cet emplacement au premier lancement (les nouveaux fichiers qu'elle crée sont conservés dans
-  son espace privé et supprimés à sa désinstallation).
+- Les utilisateurs de l'installateur gardent leurs données : la version Store utilise et met à jour les fichiers déjà
+  présents dans `%APPDATA%\ZogmaDeck` (vérifié : profils, boutons et mot de passe OBS repris). Les fichiers qu'elle crée
+  elle-même sont conservés par Windows dans son espace privé et supprimés à sa désinstallation.
+
+## Vérifications effectuées sur le paquet (Windows 11 25H2, certificat de test)
+
+| Vérification | Résultat |
+|---|---|
+| Installation, nom de famille du paquet | `TOMAZKI.ZogmaDeck_cj56jtk60z7yt`, identique à Partner Center |
+| Lancement depuis le menu Démarrer | Panneau affiché, identité de paquet détectée, prêt en ~0,4–0,9 s, ~38 Mo |
+| Réglages › démarrage avec Windows | État Windows de la tâche : 0 → 2 (activée) → 0 (désactivée) |
+| Démarrage désactivé par l'utilisateur dans Paramètres | Case décochée et message explicatif ; le choix de l'utilisateur est respecté |
+| Programme lancé depuis ZogmaDeck | S'exécute hors du paquet (sans virtualisation) |
+| Données existantes de `%APPDATA%\ZogmaDeck` | Reprises et intactes |
+| Lancement réel à l'ouverture de session (mode discret) | À vérifier : nécessite de fermer puis rouvrir la session |

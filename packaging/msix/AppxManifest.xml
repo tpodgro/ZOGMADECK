@@ -7,10 +7,9 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap10 desktop rescap">
+  IgnorableNamespaces="uap desktop rescap">
 
   <Identity Name="TOMAZKI.ZogmaDeck" Publisher="CN=683599A3-0189-4C97-92C8-4F14962DC73A" Version="0.0.0.0" ProcessorArchitecture="x64" />
 
@@ -30,7 +29,6 @@
   </Resources>
 
   <Applications>
-    <!-- Application principale : menu Démarrer, affiche le deck au lancement. -->
     <Application Id="ZogmaDeck" Executable="ZogmaDeck.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements DisplayName="ZogmaDeck" Description="Panneau de boutons personnalisables (actions, raccourcis, sons, OBS)."
         BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
@@ -38,17 +36,11 @@
           Square310x310Logo="Assets\LargeTile.png" ShortName="ZogmaDeck" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
-    </Application>
-
-    <!--
-      Point d'entrée masqué utilisé uniquement à l'ouverture de session : même exécutable, lancé avec l'argument « tray »
-      (démarrage discret dans la zone de notification). Activé ou désactivé par ZogmaDeck › Réglages, ou par
-      l'utilisateur dans Paramètres Windows › Applications › Démarrage.
-    -->
-    <Application Id="ZogmaDeckTray" Executable="ZogmaDeck.exe" EntryPoint="Windows.FullTrustApplication" uap10:Parameters="--tray">
-      <uap:VisualElements DisplayName="ZogmaDeck" Description="Démarrage de ZogmaDeck dans la zone de notification."
-        BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png"
-        AppListEntry="none" />
+      <!--
+        Démarrage à l'ouverture de session, désactivé par défaut : activé ou désactivé par ZogmaDeck › Réglages, ou par
+        l'utilisateur dans Paramètres Windows › Applications › Démarrage. L'application reconnaît ce type d'activation et
+        démarre alors discrètement dans la zone de notification.
+      -->
       <Extensions>
         <desktop:Extension Category="windows.startupTask" Executable="ZogmaDeck.exe" EntryPoint="Windows.FullTrustApplication">
           <desktop:StartupTask TaskId="ZogmaDeckStartup" Enabled="false" DisplayName="ZogmaDeck" />

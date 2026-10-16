@@ -33,11 +33,50 @@ internal static class PackageInfo
 /// <summary>
 /// Windows.ApplicationModel.StartupTask appelé directement par COM (sans projection WinRT, qui ajouterait ~25 Mo).
 /// Les interfaces et leurs IID proviennent de Windows.ApplicationModel.winmd et Windows.Foundation.winmd.
+/// Une tâche de démarrage n'est visible que depuis l'application du manifeste qui la déclare : elle est donc déclarée
+/// sur l'application principale, et le lancement à l'ouverture de session se reconnaît au type d'activation.
 /// </summary>
 internal static class PackagedStartupTask
 {
     /// <summary>Identifiant déclaré dans packaging\msix\AppxManifest.xml (desktop:StartupTask/@TaskId).</summary>
     public const string TaskId = "ZogmaDeckStartup";
+
+    private static readonly Guid IidAppInstanceStatics = new("9d11e77f-9ea6-47af-a6ec-46784c5ba254");
+    private const int AppInstanceGetActivatedEventArgs = 7; // IAppInstanceStatics : get_RecommendedInstance, GetActivatedEventArgs…
+    private const int ActivatedArgsGetKind = 6;             // IActivatedEventArgs : get_Kind, get_PreviousExecutionState…
+    private const int ActivationKindStartupTask = 1020;
+
+    /// <summary>
+    /// Vrai si Windows a lancé l'application par sa tâche de démarrage (ouverture de session) : elle démarre alors
+    /// discrètement dans la zone de notification, comme avec --tray. Faux en cas de doute.
+    /// </summary>
+    public static bool WasLaunchedByStartupTask()
+    {
+        var classId = IntPtr.Zero;
+        var statics = IntPtr.Zero;
+        var args = IntPtr.Zero;
+        try
+        {
+            const string className = "Windows.ApplicationModel.AppInstance";
+            Check(WindowsCreateString(className, className.Length, out classId));
+            var iid = IidAppInstanceStatics;
+            Check(RoGetActivationFactory(classId, ref iid, out statics));
+            Check(Invoke<OutPtr>(statics, AppInstanceGetActivatedEventArgs)(statics, out args));
+            if (args == IntPtr.Zero) return false;
+            Check(Invoke<OutInt>(args, ActivatedArgsGetKind)(args, out var kind));
+            return kind == ActivationKindStartupTask;
+        }
+        catch (Exception ex) when (ex is COMException or ArgumentException or EntryPointNotFoundException or DllNotFoundException)
+        {
+            return false;
+        }
+        finally
+        {
+            if (args != IntPtr.Zero) Marshal.Release(args);
+            if (statics != IntPtr.Zero) Marshal.Release(statics);
+            if (classId != IntPtr.Zero) WindowsDeleteString(classId);
+        }
+    }
 
     public enum State { Disabled = 0, DisabledByUser = 1, Enabled = 2, DisabledByPolicy = 3, EnabledByPolicy = 4 }
 

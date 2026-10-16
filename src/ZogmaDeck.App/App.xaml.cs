@@ -56,7 +56,9 @@ public partial class App : Application
     private void Start(string[] startArgs)
     {
         var args = startArgs;
-        var startHidden = args.Contains("--tray", StringComparer.OrdinalIgnoreCase);
+        // --tray : démarrage avec Windows de la version classique ; version Store : lancée par sa tâche de démarrage.
+        var startHidden = args.Contains("--tray", StringComparer.OrdinalIgnoreCase) ||
+                          (PackageInfo.IsPackaged && PackagedStartupTask.WasLaunchedByStartupTask());
         var dataIndex = Array.FindIndex(args, a => a.Equals("--data", StringComparison.OrdinalIgnoreCase));
         var dataDir = dataIndex >= 0 && dataIndex + 1 < args.Length ? args[dataIndex + 1] : null;
 

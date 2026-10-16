@@ -175,7 +175,6 @@ public class MsixPackageTests
 {
     private static readonly XNamespace Foundation = "http://schemas.microsoft.com/appx/manifest/foundation/windows10";
     private static readonly XNamespace Desktop = "http://schemas.microsoft.com/appx/manifest/desktop/windows10";
-    private static readonly XNamespace Uap10 = "http://schemas.microsoft.com/appx/manifest/uap/windows10/10";
 
     private static XDocument LoadManifest([System.Runtime.CompilerServices.CallerFilePath] string source = "")
     {
@@ -192,11 +191,13 @@ public class MsixPackageTests
         Assert.Equal("CN=683599A3-0189-4C97-92C8-4F14962DC73A", identity.Attribute("Publisher")!.Value);
         Assert.Equal("TOMAZKI", doc.Root.Element(Foundation + "Properties")!.Element(Foundation + "PublisherDisplayName")!.Value);
 
-        // La tâche de démarrage appelée par le code est celle du manifeste, et elle lance l'application en mode discret.
+        // La tâche de démarrage appelée par le code est celle du manifeste, déclarée sur l'application unique :
+        // Windows ne la rend visible qu'à l'application qui la déclare (celle dont l'éditeur modifie le réglage).
         var task = doc.Descendants(Desktop + "StartupTask").Single();
         Assert.Equal(PackagedStartupTask.TaskId, task.Attribute("TaskId")!.Value);
-        var trayApp = task.Ancestors(Foundation + "Application").Single();
-        Assert.Equal("--tray", trayApp.Attribute(Uap10 + "Parameters")!.Value);
+        Assert.Equal("false", task.Attribute("Enabled")!.Value);
+        var app = Assert.Single(doc.Descendants(Foundation + "Application"));
+        Assert.Same(app, task.Ancestors(Foundation + "Application").Single());
     }
 
     [Fact]
