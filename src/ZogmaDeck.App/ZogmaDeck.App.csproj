@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>ZogmaDeck</AssemblyName>
+    <RootNamespace>ZogmaDeck</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\ZogmaDeck.ico</ApplicationIcon>
+    <!-- ThemeMode (thème Fluent) est encore marqué expérimental dans .NET 10. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+
+  <!-- Publication portable : dotnet publish -c Release -r win-x64 (voir build.ps1).
+       Pas de compression du fichier unique : mesuré sur ce projet, la compression réduit l'exe de 126 à 59 Mo
+       mais fait passer la mémoire privée au repos de ~40 à ~100 Mo (assemblies décompressées en mémoire).
+       L'archive zip de distribution reste compressée. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained Condition="'$(SelfContained)' == ''">true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\ZogmaDeck.ico" />
+    <Resource Include="Assets\Icons\*.tsv" />
+    <None Remove="Assets\ZogmaDeck-256.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZogmaDeck.Core\ZogmaDeck.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ZogmaDeck.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ZogmaDeck.App/ZogmaDeck.App.csproj" />
+    <Project Path="src/ZogmaDeck.Core/ZogmaDeck.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ZogmaDeck.Tests/ZogmaDeck.Tests.csproj" />
+  </Folder>
+</Solution>

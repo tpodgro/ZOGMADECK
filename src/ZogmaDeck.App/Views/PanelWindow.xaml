@@ -1,0 +1,214 @@
+<Window x:Class="ZogmaDeck.Views.PanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ZogmaDeck.ViewModels"
+        Title="ZogmaDeck"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False"
+        ShowActivated="True"
+        WindowStartupLocation="Manual"
+        Left="0" Top="0"
+        UseLayoutRounding="True"
+        Foreground="{DynamicResource Pd.Text}"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        KeyboardNavigation.TabNavigation="Cycle"
+        d:DataContext="{d:DesignInstance vm:PanelViewModel}"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:PanelButtonViewModel}">
+            <Button Style="{StaticResource Pd.TileButton}" Width="{Binding Size}" Height="{Binding Size}" Margin="{Binding TileMargin}"
+                    Background="{Binding TileBackground}" Foreground="{Binding LabelForeground}"
+                    Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    CommandParameter="{Binding}"
+                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                    ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="700"
+                    AutomationProperties.Name="{Binding Label}">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Exécuter"
+                                  Command="{Binding PlacementTarget.Tag.RunCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  CommandParameter="{Binding}" />
+                        <MenuItem Header="Modifier ce bouton…"
+                                  Command="{Binding PlacementTarget.Tag.EditButtonCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  CommandParameter="{Binding}" />
+                    </ContextMenu>
+                </Button.ContextMenu>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.RowSpan="2" Text="{Binding ShortcutHint}" FontSize="10" Opacity="0.7" Effect="{Binding LabelEffect}"
+                               HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,-2,0,0" />
+                    <!-- Pastille colorée (style verre) contenant le symbole, l'emoji ou le logo -->
+                    <Border Width="{Binding BadgeSize}" Height="{Binding BadgeSize}" CornerRadius="{Binding BadgeCorner}" Background="{Binding BadgeBrush}"
+                            Effect="{Binding BadgeEffect}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVis}}">
+                        <Grid>
+                            <TextBlock Style="{StaticResource Pd.Glyph}" Text="{Binding Glyph}" FontFamily="{Binding GlyphFont}" FontSize="{Binding GlyphSize}"
+                                       Foreground="{Binding IconForeground}" Visibility="{Binding HasGlyph, Converter={StaticResource BoolToVis}}" />
+                            <Path Data="{Binding Geometry}" Fill="{Binding IconForeground}" Stretch="Uniform" Width="{Binding GeometrySize}" Height="{Binding GeometrySize}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="{Binding HasGeometry, Converter={StaticResource BoolToVis}}" />
+                        </Grid>
+                    </Border>
+                    <Image Source="{Binding Image}" Width="{Binding ImageSize}" Height="{Binding ImageSize}" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Grid.Row="1" Text="{Binding Label}" FontSize="{Binding LabelSize}" TextAlignment="Center" Effect="{Binding LabelEffect}"
+                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="{Binding LabelMaxHeight}" Margin="0,3,0,0"
+                               Visibility="{Binding ShowLabel, Converter={StaticResource BoolToVis}}" />
+                    <ProgressBar Grid.RowSpan="2" IsIndeterminate="{Binding IsRunning}" Height="3" VerticalAlignment="Bottom"
+                                 Margin="2,0,2,-3" Background="Transparent" Foreground="{Binding LabelForeground}" BorderThickness="0"
+                                 MinHeight="0" Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" />
+                    <Border Grid.RowSpan="2" Margin="-7" CornerRadius="9" BorderThickness="2" IsHitTestVisible="False">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Flash}" Value="error">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Setter Property="BorderBrush" Value="#D13438" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Flash}" Value="ok">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Setter Property="BorderBrush" Value="#802EA043" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:AddTileViewModel}">
+            <Button Style="{StaticResource Pd.AddTileButton}" Width="{Binding Size}" Height="{Binding Size}" Margin="{Binding TileMargin}"
+                    Command="{Binding DataContext.AddButtonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    ToolTip="Ajouter un bouton à ce profil" AutomationProperties.Name="Ajouter un bouton">
+                <StackPanel Effect="{Binding TextEffect}">
+                    <TextBlock Style="{StaticResource Pd.Glyph}" Text="&#xE710;" FontSize="{Binding GlyphSize}" />
+                    <TextBlock Text="Ajouter" FontSize="12" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid x:Name="Root">
+        <!-- Fond : couleur + opacité (transparent par défaut), image facultative -->
+        <Border x:Name="Surface" CornerRadius="{Binding PanelCorner}" Background="{Binding PanelBackground}" />
+        <Border CornerRadius="{Binding PanelCorner}" Background="{Binding PanelImage}" IsHitTestVisible="False" />
+        <Border CornerRadius="{Binding PanelCorner}" Background="{Binding PanelSheen}" BorderBrush="{Binding PanelBorder}" BorderThickness="1" IsHitTestVisible="False" />
+        <Grid Margin="12,10,12,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Profils : traits arrondis (blanc atténué, blanc lumineux pour le profil affiché), nom en infobulle.
+                 Masqué s'il n'y a qu'un profil. Éditeur et fermeture : icône de notification, Ctrl+E, Échap. -->
+            <ItemsControl ItemsSource="{Binding Profiles}" Focusable="False" HorizontalAlignment="Center" Margin="0,0,0,6"
+                          Visibility="{Binding HasSeveralProfiles, Converter={StaticResource BoolToVis}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:ProfileTab}">
+                        <Button ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="250" AutomationProperties.Name="{Binding Name}"
+                                Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}" Cursor="Hand" FocusVisualStyle="{StaticResource Pd.FocusVisual}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <!-- Zone cliquable plus grande que le trait -->
+                                    <Border Background="#01FFFFFF" Padding="4,6">
+                                        <Border x:Name="bar" Width="18" Height="4" CornerRadius="2" Opacity="0.4" Effect="{Binding DataContext.TextShadow, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Background="{Binding DataContext.ChipForeground, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bar" Property="Opacity" Value="0.7" />
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                            <Setter TargetName="bar" Property="Opacity" Value="1" />
+                                            <Setter TargetName="bar" Property="Width" Value="28" />
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Grille de boutons -->
+            <!-- Les boutons gardent leur taille et se répartissent sur la largeur : colonnes du profil (taille automatique)
+                 ou largeur choisie à la souris (une colonne, une rangée ou une grille selon la forme du panneau). -->
+            <ScrollViewer x:Name="Scroller" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Focusable="False">
+                <ItemsControl x:Name="TilesHost" ItemsSource="{Binding Tiles}" Focusable="False" Width="{Binding TilesWidth}" MinWidth="80"
+                              HorizontalAlignment="Stretch" KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Continue">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Pied : uniquement en cas d'erreur (la réussite est signalée par un liseré sur le bouton) -->
+            <Border Grid.Row="2" Style="{StaticResource Pd.Chip}" Background="{Binding ChipBackground}" BorderBrush="{Binding ChipBorder}" Width="{Binding ActualWidth, ElementName=TilesHost}" Margin="0,6,0,0" Padding="10,3"
+                    Visibility="{Binding HasFooter, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding StatusText}" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" MaxHeight="34"
+                           Foreground="{DynamicResource Pd.Error}" ToolTip="{Binding StatusText}" />
+            </Border>
+        </Grid>
+
+        <!-- Redimensionnement libre : bord droit, bord bas, coin. La taille des boutons ne change pas (Ctrl + molette pour cela). -->
+        <Thumb x:Name="ResizeRight" Width="7" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,16,0,16" Cursor="SizeWE">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="#01FFFFFF" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        <Thumb x:Name="ResizeBottom" Height="7" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="16,0,16,0" Cursor="SizeNS">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="#01FFFFFF" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        <Thumb x:Name="ResizeGrip" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,3,3"
+               Cursor="SizeNWSE" ToolTip="Glisser pour redimensionner le panneau (Ctrl + molette : taille des boutons)"
+               AutomationProperties.Name="Redimensionner">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="Transparent">
+                        <Path Data="M 14,4 L 4,14 M 14,9 L 9,14" Stroke="{Binding DataContext.ChipForeground, RelativeSource={RelativeSource AncestorType=Window}}" StrokeThickness="1.5"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                    </Border>
+                </ControlTemplate>
+            </Thumb.Template>
+            <Thumb.Style>
+                <Style TargetType="Thumb">
+                    <Setter Property="Opacity" Value="0" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, ElementName=Root}" Value="True">
+                            <Setter Property="Opacity" Value="0.9" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Thumb.Style>
+        </Thumb>
+    </Grid>
+</Window>

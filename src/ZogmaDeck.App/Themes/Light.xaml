@@ -1,0 +1,27 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Jetons ZogmaDeck, thème clair (inspirés des couleurs Windows 11) -->
+    <SolidColorBrush x:Key="Pd.WindowBackground" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="Pd.PanelBackground" Color="#F9F9F9" />
+    <SolidColorBrush x:Key="Pd.Surface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Pd.SurfaceAlt" Color="#F5F5F5" />
+    <SolidColorBrush x:Key="Pd.Border" Color="#E3E3E3" />
+    <SolidColorBrush x:Key="Pd.BorderStrong" Color="#C8C8C8" />
+    <SolidColorBrush x:Key="Pd.Text" Color="#1B1B1B" />
+    <SolidColorBrush x:Key="Pd.TextSecondary" Color="#5D5D5D" />
+    <SolidColorBrush x:Key="Pd.TextTertiary" Color="#8A8A8A" />
+    <SolidColorBrush x:Key="Pd.Hover" Color="#0F000000" />
+    <SolidColorBrush x:Key="Pd.Pressed" Color="#1A000000" />
+    <SolidColorBrush x:Key="Pd.Selected" Color="#E5EEF9" />
+    <SolidColorBrush x:Key="Pd.SelectedBorder" Color="#7FA7DC" />
+    <SolidColorBrush x:Key="Pd.FocusRing" Color="#1B1B1B" />
+    <SolidColorBrush x:Key="Pd.Error" Color="#C42B1C" />
+    <SolidColorBrush x:Key="Pd.ErrorBackground" Color="#FDE7E9" />
+    <SolidColorBrush x:Key="Pd.Success" Color="#0F7B0F" />
+    <SolidColorBrush x:Key="Pd.Warning" Color="#9D5D00" />
+    <SolidColorBrush x:Key="Pd.WarningBackground" Color="#FFF4CE" />
+    <SolidColorBrush x:Key="Pd.AddTile" Color="#E6F5F5F5" />
+    <!-- Fond des éléments du panneau (profils, état), lisible même quand le fond du panneau est transparent -->
+    <SolidColorBrush x:Key="Pd.ChipBackground" Color="#E6F7F7F7" />
+    <SolidColorBrush x:Key="Pd.ChipBorder" Color="#1F000000" />
+</ResourceDictionary>

@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.3.0</Version>
+    <Company>ZogmaDeck</Company>
+    <Product>ZogmaDeck</Product>
+    <Copyright>ZogmaDeck</Copyright>
+    <NeutralLanguage>fr-FR</NeutralLanguage>
+    <SatelliteResourceLanguages>fr</SatelliteResourceLanguages>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>
