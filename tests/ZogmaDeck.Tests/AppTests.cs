@@ -187,7 +187,7 @@ public class MsixPackageTests
     {
         var doc = LoadManifest();
         var identity = doc.Root!.Element(Foundation + "Identity")!;
-        Assert.Equal("TOMAZKI.ZogmaDeck", identity.Attribute("Name")!.Value);
+        Assert.Equal("TOMAZKI.ZogmaStreamDeck", identity.Attribute("Name")!.Value);
         Assert.Equal("CN=683599A3-0189-4C97-92C8-4F14962DC73A", identity.Attribute("Publisher")!.Value);
         Assert.Equal("TOMAZKI", doc.Root.Element(Foundation + "Properties")!.Element(Foundation + "PublisherDisplayName")!.Value);
         // Nom réservé dans Partner Center (« ZogmaDeck » était pris) : le paquet est refusé s'il ne correspond pas.

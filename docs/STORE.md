@@ -6,10 +6,10 @@ Fiche de soumission Partner Center pour ZogmaDeck (produit « Application MSIX o
 |---|---|
 | Nom réservé | Zogma Deck |
 | ID Store | 9PJJ1JLZDF4Z |
-| Package/Identity/Name | TOMAZKI.ZogmaDeck |
+| Package/Identity/Name | TOMAZKI.ZogmaStreamDeck (fixé par le premier nom réservé ; invisible des utilisateurs) |
 | Package/Identity/Publisher | CN=683599A3-0189-4C97-92C8-4F14962DC73A |
 | PublisherDisplayName | TOMAZKI |
-| Package Family Name | TOMAZKI.ZogmaDeck_cj56jtk60z7yt |
+| Package Family Name | TOMAZKI.ZogmaStreamDeck_cj56jtk60z7yt |
 | Politique de confidentialité | https://github.com/tpodgro/ZOGMADECK/blob/main/docs/PRIVACY.md |
 
 ## 1. Construire le paquet
@@ -124,7 +124,7 @@ les deux tiers supérieurs (le Store peut superposer du texte sur le tiers infé
 
 | Vérification | Résultat |
 |---|---|
-| Installation, nom de famille du paquet | `TOMAZKI.ZogmaDeck_cj56jtk60z7yt`, identique à Partner Center |
+| Installation | Réussie (test effectué sous l'identité provisoire TOMAZKI.ZogmaDeck ; seule l'identité a changé depuis) |
 | Lancement depuis le menu Démarrer | Panneau affiché, identité de paquet détectée, prêt en ~0,4–0,9 s, ~38 Mo |
 | Réglages › démarrage avec Windows | État Windows de la tâche : 0 → 2 (activée) → 0 (désactivée) |
 | Démarrage désactivé par l'utilisateur dans Paramètres | Case décochée et message explicatif ; le choix de l'utilisateur est respecté |
