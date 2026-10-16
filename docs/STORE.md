@@ -4,6 +4,7 @@ Fiche de soumission Partner Center pour ZogmaDeck (produit « Application MSIX o
 
 | Élément | Valeur |
 |---|---|
+| Nom réservé | Zogma Deck |
 | ID Store | 9PJJ1JLZDF4Z |
 | Package/Identity/Name | TOMAZKI.ZogmaDeck |
 | Package/Identity/Publisher | CN=683599A3-0189-4C97-92C8-4F14962DC73A |
@@ -58,7 +59,7 @@ Téléverser `ZogmaDeck-<version>-x64.msix`. Familles d'appareils : **Windows 10
 
 **Description**
 
-> ZogmaDeck affiche à l'écran un panneau de boutons personnalisables, toujours à portée de raccourci clavier
+> Zogma Deck affiche à l'écran un panneau de boutons personnalisables, toujours à portée de raccourci clavier
 > (Ctrl+Alt+Espace par défaut), qui lance vos actions en un clic : l'équivalent logiciel d'un pupitre de streaming.
 >
 > • Lancer des applications, ouvrir des fichiers, dossiers et sites web
@@ -86,7 +87,8 @@ Téléverser `ZogmaDeck-<version>-x64.msix`. Familles d'appareils : **Windows 10
 **Mots-clés** : macro, raccourcis, lanceur, boutons, OBS, streaming, productivité. Évitez « Stream Deck » (marque
 déposée d'Elgato/Corsair) dans le nom, la description et les mots-clés : risque de refus ou de réclamation.
 
-**Nom** : le nom affiché dans le paquet (`DisplayName` du manifeste, « ZogmaDeck ») doit être l'un des noms réservés
+**Nom** : **Zogma Deck** (« ZogmaDeck » étant déjà pris dans le Store). Le nom affiché dans le paquet (`DisplayName` du
+manifeste) doit être l'un des noms réservés
 dans Partner Center › Gérer les noms d'application, sinon le paquet est refusé au téléversement.
 
 **Captures d'écran** : au moins une, PNG, 1366 × 768 px ou plus (jusqu'à 10). Les éléments importants doivent être dans

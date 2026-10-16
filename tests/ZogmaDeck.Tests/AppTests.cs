@@ -190,6 +190,10 @@ public class MsixPackageTests
         Assert.Equal("TOMAZKI.ZogmaDeck", identity.Attribute("Name")!.Value);
         Assert.Equal("CN=683599A3-0189-4C97-92C8-4F14962DC73A", identity.Attribute("Publisher")!.Value);
         Assert.Equal("TOMAZKI", doc.Root.Element(Foundation + "Properties")!.Element(Foundation + "PublisherDisplayName")!.Value);
+        // Nom réservé dans Partner Center (« ZogmaDeck » était pris) : le paquet est refusé s'il ne correspond pas.
+        Assert.Equal("Zogma Deck", doc.Root.Element(Foundation + "Properties")!.Element(Foundation + "DisplayName")!.Value);
+        Assert.All(doc.Descendants().Where(e => e.Name.LocalName == "VisualElements"),
+            v => Assert.Equal("Zogma Deck", v.Attribute("DisplayName")!.Value));
 
         // La tâche de démarrage appelée par le code est celle du manifeste, déclarée sur l'application unique :
         // Windows ne la rend visible qu'à l'application qui la déclare (celle dont l'éditeur modifie le réglage).

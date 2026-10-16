@@ -2,6 +2,7 @@
 <!--
   Manifeste du paquet MSIX de ZogmaDeck (Microsoft Store), utilisé par build.ps1 -Task msix.
   Identité réservée dans Partner Center (Gestion des produits › Identité du produit) : ne pas modifier Name ni Publisher.
+  DisplayName = nom réservé dans Partner Center (« ZogmaDeck » étant pris, le produit est publié sous « Zogma Deck »).
   La version est remplacée à la construction par celle de Directory.Build.props (4e nombre toujours 0 pour le Store).
 -->
 <Package
@@ -14,7 +15,7 @@
   <Identity Name="TOMAZKI.ZogmaDeck" Publisher="CN=683599A3-0189-4C97-92C8-4F14962DC73A" Version="0.0.0.0" ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>ZogmaDeck</DisplayName>
+    <DisplayName>Zogma Deck</DisplayName>
     <PublisherDisplayName>TOMAZKI</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <Description>Panneau de boutons personnalisables pour lancer des actions en un clic ou un raccourci clavier.</Description>
@@ -30,10 +31,10 @@
 
   <Applications>
     <Application Id="ZogmaDeck" Executable="ZogmaDeck.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements DisplayName="ZogmaDeck" Description="Panneau de boutons personnalisables (actions, raccourcis, sons, OBS)."
+      <uap:VisualElements DisplayName="Zogma Deck" Description="Panneau de boutons personnalisables (actions, raccourcis, sons, OBS)."
         BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png"
-          Square310x310Logo="Assets\LargeTile.png" ShortName="ZogmaDeck" />
+          Square310x310Logo="Assets\LargeTile.png" ShortName="Zogma Deck" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
       <!--
@@ -43,7 +44,7 @@
       -->
       <Extensions>
         <desktop:Extension Category="windows.startupTask" Executable="ZogmaDeck.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="ZogmaDeckStartup" Enabled="false" DisplayName="ZogmaDeck" />
+          <desktop:StartupTask TaskId="ZogmaDeckStartup" Enabled="false" DisplayName="Zogma Deck" />
         </desktop:Extension>
       </Extensions>
     </Application>
