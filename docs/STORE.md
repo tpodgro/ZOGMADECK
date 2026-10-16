@@ -58,8 +58,8 @@ Téléverser `ZogmaDeck-<version>-x64.msix`. Familles d'appareils : **Windows 10
 
 **Description**
 
-> ZogmaDeck transforme votre écran en Stream Deck : un panneau de boutons personnalisables, toujours à portée de
-> raccourci clavier (Ctrl+Alt+Espace par défaut), qui lance vos actions en un clic.
+> ZogmaDeck affiche à l'écran un panneau de boutons personnalisables, toujours à portée de raccourci clavier
+> (Ctrl+Alt+Espace par défaut), qui lance vos actions en un clic : l'équivalent logiciel d'un pupitre de streaming.
 >
 > • Lancer des applications, ouvrir des fichiers, dossiers et sites web
 > • Envoyer des raccourcis clavier et les touches multimédias (lecture/pause, piste suivante, volume)
@@ -83,13 +83,17 @@ Téléverser `ZogmaDeck-<version>-x64.msix`. Familles d'appareils : **Windows 10
 > Import et export des configurations
 > Aucune collecte de données
 
-**Mots-clés** : stream deck, macro, raccourcis, lanceur, OBS, streaming, productivité
+**Mots-clés** : macro, raccourcis, lanceur, boutons, OBS, streaming, productivité. Évitez « Stream Deck » (marque
+déposée d'Elgato/Corsair) dans le nom, la description et les mots-clés : risque de refus ou de réclamation.
 
-**Captures d'écran** : au moins une, 1366 × 768 px ou plus (PNG). Suggestions : le panneau sur un fond d'écran neutre,
-l'éditeur (onglet Boutons), l'onglet Apparence, un bouton OBS.
+**Nom** : le nom affiché dans le paquet (`DisplayName` du manifeste, « ZogmaDeck ») doit être l'un des noms réservés
+dans Partner Center › Gérer les noms d'application, sinon le paquet est refusé au téléversement.
 
-**Logo de la fiche** : facultatif (le Store utilise les visuels du paquet). Un carré 300 × 300 px peut être produit à partir
-de `tools/generate-icons.py` si demandé.
+**Captures d'écran** : au moins une, PNG, 1366 × 768 px ou plus (jusqu'à 10). Les éléments importants doivent être dans
+les deux tiers supérieurs (le Store peut superposer du texte sur le tiers inférieur). Suggestions : le panneau, l'éditeur
+(onglet Boutons), l'onglet Apparence, un bouton OBS.
+
+**Icône de vignette 1:1 (300 × 300 px)** : recommandée ; générée par `tools/generate-icons.py` (fonction `logo(300)`).
 
 ### Notes pour la certification — justification de `runFullTrust`
 
