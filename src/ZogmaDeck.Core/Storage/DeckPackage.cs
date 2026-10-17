@@ -287,6 +287,7 @@ public static class DeckPackage
             target.Settings.HideAfterAction = s.HideAfterAction;
             target.Settings.HideOnDeactivate = s.HideOnDeactivate;
             target.Settings.HardwareAcceleration = s.HardwareAcceleration;
+            target.Settings.AccentColor = s.AccentColor;
             target.Settings.Panel = s.Panel; // apparence complète, image de fond déjà extraite
             target.Settings.Obs.Host = s.Obs.Host;
             target.Settings.Obs.Port = s.Obs.Port;

@@ -542,6 +542,28 @@ public sealed class ButtonEditViewModel : ObservableObject
         set { if (value) SetIconKind(IconKind.Image); }
     }
 
+    public bool IsIconText
+    {
+        get => Model.Icon.Kind == IconKind.Text;
+        set { if (value) SetIconKind(IconKind.Text); }
+    }
+
+    /// <summary>Texte affiché à la place d'une icône (ex. « S1 » pour la scène 1).</summary>
+    public string IconText
+    {
+        get => Model.Icon.Kind == IconKind.Text ? Model.Icon.Glyph ?? "" : "";
+        set
+        {
+            var v = (value ?? "").Trim();
+            if (v.Length > ButtonIcon.MaxTextLength) v = v[..ButtonIcon.MaxTextLength];
+            if (Model.Icon.Kind == IconKind.Text && Model.Icon.Glyph == v) return;
+            Model.Icon.Kind = IconKind.Text;
+            Model.Icon.Glyph = v;
+            RaiseIconChanged();
+            Changed();
+        }
+    }
+
     /// <summary>Le sélecteur s'affiche pour les symboles, emoji et logos.</summary>
     public bool ShowPicker => Model.Icon.Kind is IconKind.Glyph or IconKind.Emoji or IconKind.Brand;
 
@@ -551,6 +573,7 @@ public sealed class ButtonEditViewModel : ObservableObject
         IconKind.Emoji => "Emoji : " + (IconLibrary.Emoji.FirstOrDefault(c => c.Value == Model.Icon.Glyph)?.Name ?? Model.Icon.Glyph),
         IconKind.Brand => "Logo : " + (IconLibrary.Brand(Model.Icon.Glyph)?.Title ?? Model.Icon.Glyph),
         IconKind.Image => "Image",
+        IconKind.Text => "Texte : " + Model.Icon.Glyph,
         _ => "Aucune icône",
     };
 
@@ -566,11 +589,25 @@ public sealed class ButtonEditViewModel : ObservableObject
             IconKind.Emoji when previous != IconKind.Emoji => "⭐",
             IconKind.Brand when previous != IconKind.Brand => IconLibrary.Brands.FirstOrDefault(b => b.Slug == "obsstudio")?.Slug
                                                               ?? IconLibrary.Brands.FirstOrDefault()?.Slug,
+            // Texte : on propose les premières lettres du libellé (modifiable).
+            IconKind.Text when previous != IconKind.Text => DefaultIconText(Model.Label),
             _ => Model.Icon.Glyph,
         };
         if (kind is IconKind.Glyph or IconKind.Emoji or IconKind.Brand) Picker.Kind = kind;
         RaiseIconChanged();
         Changed();
+    }
+
+    internal static string DefaultIconText(string? label)
+    {
+        var words = (label ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var text = words.Length switch
+        {
+            0 => "A",
+            1 => words[0][..Math.Min(2, words[0].Length)],
+            _ => string.Concat(words.Take(3).Select(w => char.ToUpperInvariant(w[0]))),
+        };
+        return text.Length > ButtonIcon.MaxTextLength ? text[..ButtonIcon.MaxTextLength] : text;
     }
 
     private void Pick(IconChoice choice)
@@ -588,6 +625,7 @@ public sealed class ButtonEditViewModel : ObservableObject
         foreach (var n in new[]
                  {
                      nameof(IsIconNone), nameof(IsIconGlyph), nameof(IsIconEmoji), nameof(IsIconBrand), nameof(IsIconImage),
+                     nameof(IsIconText), nameof(IconText),
                      nameof(ShowPicker), nameof(CurrentIconText), nameof(ImagePath), nameof(ImageWarning), nameof(LaunchedProgram),
                  })
             OnPropertyChanged(n);

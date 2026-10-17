@@ -30,6 +30,50 @@ public sealed class SettingsViewModel : ObservableObject
         OpenDataFolderCommand = new RelayCommand(() => OpenFolder(_rt.Paths.DataDirectory));
         OpenLogsCommand = new RelayCommand(() => OpenFolder(_rt.Paths.LogDirectory));
         ResetHotkeyCommand = new RelayCommand(() => Hotkey = AppSettings.DefaultHotkey);
+        SetAccentCommand = new RelayCommand(p => { if (p is string hex) AccentText = hex; });
+        _accentText = S.AccentColor ?? "#2F6FDB";
+    }
+
+    private string _accentText;
+    public ICommand SetAccentCommand { get; }
+    public static IReadOnlyList<string> AccentPalette => ColorHelper.Palette;
+
+    public bool UseWindowsAccent
+    {
+        get => S.AccentColor is null;
+        set
+        {
+            if (value == UseWindowsAccent) return;
+            ApplyAccent(value ? null : AccentText);
+        }
+    }
+
+    public bool UseCustomAccent
+    {
+        get => !UseWindowsAccent;
+        set => UseWindowsAccent = !value;
+    }
+
+    /// <summary>Couleur principale personnalisée (#RRGGBB) ; la modifier active le mode personnalisé.</summary>
+    public string AccentText
+    {
+        get => _accentText;
+        set
+        {
+            if (!Set(ref _accentText, value)) return;
+            var v = (value ?? "").Trim();
+            if (!v.StartsWith('#')) v = "#" + v;
+            if (v.Length == 7 && ConfigValidator.IsValidColor(v)) ApplyAccent(v.ToUpperInvariant());
+        }
+    }
+
+    private void ApplyAccent(string? hex)
+    {
+        S.AccentColor = hex;
+        _rt.Theme.ApplyAccent(hex);
+        OnPropertyChanged(nameof(UseWindowsAccent));
+        OnPropertyChanged(nameof(UseCustomAccent));
+        _rt.NotifySettingsChanged();
     }
 
     private AppSettings S => _rt.Config.Settings;
@@ -45,8 +89,14 @@ public sealed class SettingsViewModel : ObservableObject
                  {
                      nameof(Hotkey), nameof(HotkeyDisplay), nameof(SelectedTheme), nameof(AlwaysOnTop), nameof(HideAfterAction),
                      nameof(HideOnDeactivate), nameof(StartWithWindows), nameof(HardwareAcceleration),
+                     nameof(UseWindowsAccent), nameof(UseCustomAccent),
                  })
             OnPropertyChanged(p);
+        if (S.AccentColor is { } accent && accent != _accentText)
+        {
+            _accentText = accent;
+            OnPropertyChanged(nameof(AccentText));
+        }
     }
 
     public string Hotkey
@@ -574,6 +624,7 @@ public sealed class BackupViewModel : ObservableObject
                 if (KeyChord.TryParse(oldHotkey, out var old, out _)) _rt.Hotkey.Register(old);
             }
         }
+        _rt.Theme.ApplyAccent(s.AccentColor);
         if (s.Theme != oldTheme) _rt.Theme.Apply(s.Theme);
     }
 

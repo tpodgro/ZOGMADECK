@@ -22,6 +22,11 @@ public static class ConfigValidator
             s.Hotkey = AppSettings.DefaultHotkey;
         }
         if (!Enum.IsDefined(s.Theme)) s.Theme = ThemePreference.System;
+        if (s.AccentColor is not null && !IsValidColor(s.AccentColor))
+        {
+            w.Add($"Couleur principale invalide ({s.AccentColor}) : retour à la couleur de Windows.");
+            s.AccentColor = null;
+        }
         s.Obs ??= new ObsSettings();
         if (string.IsNullOrWhiteSpace(s.Obs.Host)) s.Obs.Host = "localhost";
         if (s.Obs.Port is < 1 or > 65535)

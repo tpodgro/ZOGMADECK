@@ -82,6 +82,11 @@ public sealed class PanelButtonViewModel : ObservableObject
                 Geometry = IconLibrary.BrandGeometry(icon.Glyph);
                 if (Geometry is null) Glyph = "\uE7BA"; // logo inconnu
                 break;
+            case IconKind.Text when !string.IsNullOrWhiteSpace(icon.Glyph):
+                Glyph = icon.Glyph.Trim();
+                GlyphFont = TextIconFont;
+                GlyphWeight = FontWeights.SemiBold;
+                break;
         }
 
         var iconScale = look.IconScale / 100.0;
@@ -121,6 +126,13 @@ public sealed class PanelButtonViewModel : ObservableObject
             GeometrySize = Math.Max(8, Math.Round(size * (ShowLabel ? 0.32 : 0.46) * iconScale));
         }
 
+        if (icon.Kind == IconKind.Text && Glyph is { } text)
+        {
+            // Plus le texte est long, plus il est petit, pour tenir dans la pastille ou le bouton.
+            var factor = text.Length switch { 1 => 0.95, 2 => 0.78, 3 => 0.6, 4 => 0.48, _ => 0.4 };
+            GlyphSize = Math.Max(8, Math.Round(GlyphSize * factor));
+        }
+
         LabelSize = Math.Clamp(Math.Round(Math.Clamp(size * 0.125, 11, 16) * look.LabelScale / 100.0), 8, 28);
         LabelMaxHeight = Math.Ceiling(LabelSize * 2.7);
         ShortcutHint = look.ShowShortcutNumbers && index < 9 ? (index + 1).ToString() : null;
@@ -135,6 +147,8 @@ public sealed class PanelButtonViewModel : ObservableObject
     /// <summary>Symbole Fluent ou emoji (texte), selon <see cref="GlyphFont"/>.</summary>
     public string? Glyph { get; }
     public FontFamily GlyphFont { get; } = IconCatalog.Font;
+    public FontWeight GlyphWeight { get; } = FontWeights.Normal;
+    public static readonly FontFamily TextIconFont = new("Segoe UI Variable Display, Segoe UI");
     public bool HasGlyph => Glyph is not null && Image is null;
     public Geometry? Geometry { get; }
     public bool HasGeometry => Geometry is not null;

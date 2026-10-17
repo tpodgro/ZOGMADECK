@@ -52,7 +52,7 @@
                             Effect="{Binding BadgeEffect}" HorizontalAlignment="Center" VerticalAlignment="Center"
                             Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVis}}">
                         <Grid>
-                            <TextBlock Style="{StaticResource Pd.Glyph}" Text="{Binding Glyph}" FontFamily="{Binding GlyphFont}" FontSize="{Binding GlyphSize}"
+                            <TextBlock Style="{StaticResource Pd.Glyph}" Text="{Binding Glyph}" FontFamily="{Binding GlyphFont}" FontSize="{Binding GlyphSize}" FontWeight="{Binding GlyphWeight}"
                                        Foreground="{Binding IconForeground}" Visibility="{Binding HasGlyph, Converter={StaticResource BoolToVis}}" />
                             <Path Data="{Binding Geometry}" Fill="{Binding IconForeground}" Stretch="Uniform" Width="{Binding GeometrySize}" Height="{Binding GeometrySize}"
                                   HorizontalAlignment="Center" VerticalAlignment="Center"

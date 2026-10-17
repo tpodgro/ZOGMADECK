@@ -37,6 +37,8 @@ public sealed class AppSettings
     public bool HideOnDeactivate { get; set; }
     /// <summary>Rendu WPF par le GPU (prend effet au redémarrage). Désactivé par défaut.</summary>
     public bool HardwareAcceleration { get; set; }
+    /// <summary>Couleur principale de l'interface (#RRGGBB) ; null = couleur d'accentuation de Windows.</summary>
+    public string? AccentColor { get; set; }
     public ObsSettings Obs { get; set; } = new();
     public PanelAppearance Panel { get; set; } = new();
 }
@@ -127,12 +129,16 @@ public enum IconKind
     Emoji,
     /// <summary>Logo d'application ou de service (catalogue intégré, identifiant dans <see cref="ButtonIcon.Glyph"/>).</summary>
     Brand,
+    /// <summary>Texte court (ex. « S1 ») affiché à la place d'une icône, dans <see cref="ButtonIcon.Glyph"/>.</summary>
+    Text,
 }
 
 public sealed class ButtonIcon
 {
     public IconKind Kind { get; set; } = IconKind.None;
-    /// <summary>Selon <see cref="Kind"/> : caractère Segoe Fluent Icons, emoji, ou identifiant de logo.</summary>
+    public const int MaxTextLength = 6;
+
+    /// <summary>Selon <see cref="Kind"/> : caractère Segoe Fluent Icons, emoji, identifiant de logo ou texte court.</summary>
     public string? Glyph { get; set; }
     /// <summary>Chemin absolu, ou relatif au dossier de données (ex. "assets/xxx.png").</summary>
     public string? ImagePath { get; set; }

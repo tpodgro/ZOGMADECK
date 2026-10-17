@@ -31,7 +31,7 @@
                             Effect="{Binding BadgeEffect}" HorizontalAlignment="Center" VerticalAlignment="Center"
                             Visibility="{Binding HasImage, Converter={StaticResource InverseBoolToVis}}">
                         <Grid>
-                            <TextBlock Style="{StaticResource Pd.Glyph}" Text="{Binding Glyph}" FontFamily="{Binding GlyphFont}" FontSize="{Binding GlyphSize}"
+                            <TextBlock Style="{StaticResource Pd.Glyph}" Text="{Binding Glyph}" FontFamily="{Binding GlyphFont}" FontSize="{Binding GlyphSize}" FontWeight="{Binding GlyphWeight}"
                                        Foreground="{Binding IconForeground}" Visibility="{Binding HasGlyph, Converter={StaticResource BoolToVis}}" />
                             <Path Data="{Binding Geometry}" Fill="{Binding IconForeground}" Stretch="Uniform" Width="{Binding GeometrySize}" Height="{Binding GeometrySize}"
                                   Visibility="{Binding HasGeometry, Converter={StaticResource BoolToVis}}" />
@@ -498,7 +498,8 @@
                                             <RadioButton Content="Symbole" IsChecked="{Binding IsIconGlyph}" Margin="0,0,14,4" MinWidth="0" />
                                             <RadioButton Content="Emoji" IsChecked="{Binding IsIconEmoji}" Margin="0,0,14,4" MinWidth="0" />
                                             <RadioButton Content="Logo d'appli" IsChecked="{Binding IsIconBrand}" Margin="0,0,14,4" MinWidth="0" />
-                                            <RadioButton Content="Image" IsChecked="{Binding IsIconImage}" Margin="0,0,0,4" MinWidth="0" />
+                                            <RadioButton Content="Image" IsChecked="{Binding IsIconImage}" Margin="0,0,14,4" MinWidth="0" />
+                                            <RadioButton Content="Texte" IsChecked="{Binding IsIconText}" Margin="0,0,0,4" MinWidth="0" />
                                         </WrapPanel>
                                         <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,2,0,0" Text="{Binding CurrentIconText}" />
 
@@ -556,6 +557,13 @@
                                             <TextBlock Style="{StaticResource Pd.Hint}" Text="{Binding CountText}" />
                                         </StackPanel>
 
+                                        <StackPanel Margin="0,8,0,0" Visibility="{Binding IsIconText, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Texte affiché à la place de l'icône" Style="{StaticResource Pd.Label}" />
+                                            <TextBox Width="160" HorizontalAlignment="Left" MaxLength="6" FontSize="16" FontWeight="SemiBold"
+                                                     Text="{Binding IconText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Texte de l'icône" />
+                                            <TextBlock Style="{StaticResource Pd.Hint}" Text="1 à 4 caractères conseillés (ex. S1, S2 pour des scènes, REC, LIVE…). La taille s'adapte à la longueur." />
+                                        </StackPanel>
+
                                         <StackPanel Margin="0,8,0,0" Visibility="{Binding IsIconImage, Converter={StaticResource BoolToVis}}">
                                             <WrapPanel>
                                                 <Button Content="Choisir une image…" Margin="0,0,6,6" Command="{Binding BrowseImageCommand}" />
@@ -589,6 +597,7 @@
                                             <Border Width="28" Height="28" CornerRadius="6" Background="{Binding ColorBrush}" Margin="0,0,8,0"
                                                     BorderBrush="{DynamicResource Pd.Border}" BorderThickness="1" />
                                             <TextBox Width="120" Text="{Binding ColorText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Couleur hexadécimale" />
+                                            <ctl:ColorPicker Margin="8,0,0,0" Color="{Binding ColorText, UpdateSourceTrigger=PropertyChanged}" />
                                         </StackPanel>
                                         <TextBlock Style="{StaticResource Pd.ErrorAuto}" Text="{Binding ColorError}" />
 
@@ -632,6 +641,29 @@
                                 <TextBlock Style="{StaticResource Pd.Label}" Margin="0,14,0,4" Text="Thème" />
                                 <ComboBox Width="240" HorizontalAlignment="Left" ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme}"
                                           DisplayMemberPath="Label" AutomationProperties.Name="Thème" />
+                                <TextBlock Style="{StaticResource Pd.Label}" Margin="0,14,0,4" Text="Couleur principale (cases, curseurs, boutons d'action…)" />
+                                <RadioButton Content="Couleur d'accentuation de Windows" IsChecked="{Binding UseWindowsAccent}" GroupName="Accent" />
+                                <RadioButton Content="Couleur personnalisée" IsChecked="{Binding UseCustomAccent}" GroupName="Accent" Margin="0,4,0,0" />
+                                <StackPanel Margin="28,6,0,0" Visibility="{Binding UseCustomAccent, Converter={StaticResource BoolToVis}}">
+                                    <ItemsControl ItemsSource="{x:Static vm:SettingsViewModel.AccentPalette}" Focusable="False">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource Pd.Swatch}" Background="{Binding}" ToolTip="{Binding}" AutomationProperties.Name="{Binding}"
+                                                        Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <TextBox Width="120" Text="{Binding AccentText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Couleur principale" />
+                                        <ctl:ColorPicker Margin="8,0,0,0" Color="{Binding AccentText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -712,6 +744,7 @@
                                     <Border Width="28" Height="28" CornerRadius="6" Background="{Binding ColorBrush}" Margin="0,0,8,0"
                                             BorderBrush="{DynamicResource Pd.Border}" BorderThickness="1" />
                                     <TextBox Width="120" Text="{Binding BackgroundColorText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Couleur du fond" />
+                                    <ctl:ColorPicker Margin="8,0,0,0" Color="{Binding BackgroundColorText, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource Pd.ErrorAuto}" Text="{Binding ColorError}" />
 

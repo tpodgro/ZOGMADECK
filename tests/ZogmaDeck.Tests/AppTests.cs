@@ -211,3 +211,45 @@ public class MsixPackageTests
         Assert.False(new StartupService(@"C:\x\ZogmaDeck.exe").IsPackaged);
     }
 }
+
+public class AppearanceTests
+{
+    [Theory]
+    [InlineData("#2F6FDB")]
+    [InlineData("#C2185B")]
+    [InlineData("#000000")]
+    [InlineData("#FFFFFF")]
+    [InlineData("#7F7F7F")]
+    public void ColorPicker_HsvRoundTrip(string hex)
+    {
+        var c = ColorHelper.Parse(hex, Colors.Red);
+        var (h, s, v) = Controls.ColorPicker.ToHsv(c);
+        Assert.Equal(hex, Controls.ColorPicker.ToHex(Controls.ColorPicker.FromHsv(h, s, v)));
+    }
+
+    [Fact]
+    public void AccentShades_GoFromLightToDark()
+    {
+        var shades = ThemeService.AccentShades(Color.FromRgb(0x00, 0x78, 0xD4));
+        static double L(Color c) => (Math.Max(c.R, Math.Max(c.G, c.B)) + Math.Min(c.R, Math.Min(c.G, c.B))) / 2.0;
+        Assert.Equal(7, shades.Length);
+        Assert.True(L(shades[1]) > L(shades[0]) && L(shades[2]) > L(shades[1]) && L(shades[3]) > L(shades[2]));
+        Assert.True(L(shades[4]) < L(shades[0]) && L(shades[5]) < L(shades[4]) && L(shades[6]) < L(shades[5]));
+    }
+
+    [Theory]
+    [InlineData("Scène 1", "S1")]
+    [InlineData("Bloc-notes", "Bl")]
+    [InlineData("Démarrer le stream", "DLS")]
+    [InlineData("", "A")]
+    public void TextIcon_DefaultFromLabel(string label, string expected) =>
+        Assert.Equal(expected, ViewModels.ButtonEditViewModel.DefaultIconText(label));
+
+    [Fact]
+    public void InvalidAccent_IsResetByValidator()
+    {
+        var config = new Core.Model.DeckConfig { Settings = { AccentColor = "rouge" }, Profiles = [new Core.Model.Profile()] };
+        Core.Storage.ConfigValidator.Normalize(config);
+        Assert.Null(config.Settings.AccentColor);
+    }
+}
