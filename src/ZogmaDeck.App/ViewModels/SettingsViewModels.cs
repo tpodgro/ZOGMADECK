@@ -449,7 +449,10 @@ public sealed class BackupViewModel : ObservableObject
     public string PreviewSummary => Preview is not { } p
         ? ""
         : $"{Path.GetFileName(p.SourcePath)} : {p.Config.Profiles.Count} profil(s) — {string.Join(", ", p.Config.Profiles.Select(x => x.Name))} — " +
-          $"{p.ButtonCount} bouton(s){(p.ExportedAt is { } d ? $", exporté le {d.LocalDateTime:dd/MM/yyyy HH:mm}" : "")}.";
+          $"{p.ButtonCount} bouton(s){(p.ExportedAt is { } d ? $", exporté le {d.LocalDateTime:dd/MM/yyyy HH:mm}" : "")}." +
+          (p.ScriptCount > 0
+              ? $" Attention : {p.ScriptCount} étape(s) exécutent un script. Importez seulement si vous faites confiance à la source ; vérifiez ces scripts avant d'utiliser les boutons."
+              : "");
 
     public IReadOnlyList<string> PreviewMissing => Preview?.Missing
         .Select(m => $"{m.KindLabel} — {m.ProfileName} › {m.ButtonLabel} : {m.Path}").ToList() ?? [];

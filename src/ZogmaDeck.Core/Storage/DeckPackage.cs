@@ -72,6 +72,8 @@ public sealed class ImportPreview
     public required string SourcePath { get; init; }
     public DateTimeOffset? ExportedAt { get; init; }
     public int ButtonCount => Config.Profiles.Sum(p => p.Buttons.Count);
+    /// <summary>Étapes qui exécutent du code (scripts) : signalées avant l'import, jamais exécutées par celui-ci.</summary>
+    public int ScriptCount => Config.Profiles.SelectMany(p => p.Buttons).SelectMany(b => b.Actions).Count(a => a is ScriptAction);
     internal IReadOnlyDictionary<string, byte[]> PackageAssets { get; init; } = new Dictionary<string, byte[]>();
 }
 
