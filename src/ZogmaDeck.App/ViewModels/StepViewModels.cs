@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using ZogmaDeck.Core.Actions;
 using ZogmaDeck.Core.Input;
 using ZogmaDeck.Core.Storage;
+using ZogmaDeck.Helpers;
 using ZogmaDeck.Services;
 
 namespace ZogmaDeck.ViewModels;
@@ -175,6 +176,8 @@ public abstract class FieldViewModel : ObservableObject
             FieldKind.KeyChord => new KeyChordFieldViewModel(owner, p, f),
             FieldKind.Profile => new ProfileFieldViewModel(owner, p, f),
             FieldKind.ObsScene or FieldKind.ObsInput => new ObsListFieldViewModel(owner, p, f, kind == FieldKind.ObsScene),
+            FieldKind.Sound => new SoundFieldViewModel(owner, p, f),
+            FieldKind.Time => new TimeFieldViewModel(owner, p, f),
             _ => new TextFieldViewModel(owner, p, f, kind),
         };
     }
@@ -202,11 +205,11 @@ public sealed class TextFieldViewModel : FieldViewModel
         }
     }
 
-    public bool IsMultiline => _kind is FieldKind.MultilineText or FieldKind.Json;
-    public bool IsMonospace => _kind == FieldKind.Json;
+    public bool IsMultiline => _kind is FieldKind.MultilineText or FieldKind.Json or FieldKind.Code;
+    public bool IsMonospace => _kind is FieldKind.Json or FieldKind.Code;
     public bool CanBrowseFile => _kind is FieldKind.FilePath or FieldKind.FileOrUrl;
     public bool CanBrowseFolder => _kind is FieldKind.FolderPath or FieldKind.FileOrUrl;
-    public double MinLines => IsMultiline ? 4 : 1;
+    public double MinLines => _kind == FieldKind.Code ? 8 : IsMultiline ? 4 : 1;
     public ICommand BrowseFileCommand { get; }
     public ICommand BrowseFolderCommand { get; }
 
@@ -453,5 +456,143 @@ public sealed class ObsListFieldViewModel : FieldViewModel
         Status = names.Count == 0
             ? (_scenes ? "Aucune scène trouvée." : "Aucune source trouvée.")
             : $"{names.Count} {(_scenes ? "scène(s)" : "source(s)")} trouvée(s) dans OBS.";
+    }
+}
+
+/// <summary>Fichier audio : saisie, parcourir, bibliothèque intégrée, écoute de l'extrait configuré, durée du fichier.</summary>
+public sealed class SoundFieldViewModel : FieldViewModel
+{
+    private string? _durationText;
+    private int _durationRequest;
+
+    public SoundFieldViewModel(StepViewModel owner, PropertyInfo p, FieldAttribute f) : base(owner, p, f)
+    {
+        BrowseFileCommand = new RelayCommand(BrowseFile);
+        PreviewCommand = new AsyncCommand(PreviewAsync, ex => Warning = ex.Message);
+        StopCommand = new RelayCommand(() => Owner.Runtime.Audio.Stop(this));
+        OpenSourceCommand = new RelayCommand(o => { if (o is string url) _ = Owner.Runtime.Shell.OpenAsync(url, CancellationToken.None); });
+        RefreshWarning();
+        _ = LoadDurationAsync();
+    }
+
+    public ICommand BrowseFileCommand { get; }
+    public ICommand PreviewCommand { get; }
+    public ICommand StopCommand { get; }
+    public ICommand OpenSourceCommand { get; }
+    public IReadOnlyList<LibrarySound> Library => SoundLibrary.Sounds;
+    public IReadOnlyList<Option> OnlineSources => SoundLibrary.OnlineSources.Select(s => new Option(s.Url, s.Name)).ToList();
+
+    public string Text
+    {
+        get => Value as string ?? "";
+        set
+        {
+            Value = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedLibrarySound));
+            RefreshWarning();
+            _ = LoadDurationAsync();
+        }
+    }
+
+    /// <summary>Son de la bibliothèque correspondant au fichier actuel ; le choisir le copie dans les données.</summary>
+    public LibrarySound? SelectedLibrarySound
+    {
+        get => Library.FirstOrDefault(s => string.Equals($"{SoundLibrary.AssetsFolder}/{s.File}", Text.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase));
+        set
+        {
+            if (value is null || ReferenceEquals(value, SelectedLibrarySound)) return;
+            try
+            {
+                Text = SoundLibrary.Install(value, Owner.Runtime.Paths.DataDirectory);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Warning = "Copie du son impossible : " + ex.Message;
+            }
+        }
+    }
+
+    public string? DurationText
+    {
+        get => _durationText;
+        private set => Set(ref _durationText, value);
+    }
+
+    private string FullPath => ResourcePaths.Resolve(Text, Owner.Runtime.Paths.DataDirectory);
+
+    private void BrowseFile()
+    {
+        var dlg = new OpenFileDialog { Filter = Attribute.FileFilter ?? PlaySoundAction.AudioFilter, CheckFileExists = true, Title = Label };
+        var current = FullPath;
+        if (current.Length > 0 && Path.IsPathFullyQualified(current) && Directory.Exists(Path.GetDirectoryName(current)))
+            dlg.InitialDirectory = Path.GetDirectoryName(current);
+        if (dlg.ShowDialog() == true) Text = dlg.FileName;
+    }
+
+    /// <summary>Écoute avec le volume et l'extrait réglés dans l'action ; un nouveau clic relance depuis le début.</summary>
+    private async Task PreviewAsync()
+    {
+        RefreshWarning();
+        var request = Owner.Model is PlaySoundAction a
+            ? a.ToRequest(Owner.Runtime.Paths.DataDirectory) with { WaitForEnd = false, Owner = this, Repeat = SoundRepeatMode.Restart }
+            : new SoundRequest(FullPath, 0.8, false, Owner: this, Repeat: SoundRepeatMode.Restart);
+        await Owner.Runtime.Audio.PlayAsync(request, CancellationToken.None);
+    }
+
+    private async Task LoadDurationAsync()
+    {
+        var request = ++_durationRequest;
+        var path = FullPath;
+        TimeSpan? duration = null;
+        if (path.Length > 0 && File.Exists(path)) duration = await AudioService.GetDurationAsync(path);
+        if (request != _durationRequest) return; // un autre fichier a été choisi entre-temps
+        DurationText = duration is { } d ? $"Durée : {TimeFormat.Format(Math.Round(d.TotalSeconds, 1))}" : null;
+    }
+
+    public override void RefreshWarning()
+    {
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            Warning = null;
+            return;
+        }
+        var full = FullPath;
+        Warning = !Path.IsPathFullyQualified(full) || File.Exists(full) ? null : "Introuvable sur ce poste : " + full;
+    }
+}
+
+/// <summary>Position dans un son, saisie « 1:23.5 » ou « 83.5 » ; stockée en secondes.</summary>
+public sealed class TimeFieldViewModel : FieldViewModel
+{
+    private string _text;
+    private string? _error;
+
+    public TimeFieldViewModel(StepViewModel owner, PropertyInfo p, FieldAttribute f) : base(owner, p, f)
+    {
+        var v = Convert.ToDouble(Value ?? 0d, CultureInfo.InvariantCulture);
+        _text = v > 0 ? TimeFormat.Format(v) : "";
+    }
+
+    public string Text
+    {
+        get => _text;
+        set
+        {
+            if (!Set(ref _text, value)) return;
+            if (!TimeFormat.TryParse(value, out var seconds))
+            {
+                Error = "Format attendu : 1:23.5 (minutes:secondes) ou 83.5 (secondes).";
+                return;
+            }
+            Error = null;
+            Value = seconds;
+        }
+    }
+
+    public string? Error
+    {
+        get => _error;
+        private set => Set(ref _error, value);
     }
 }

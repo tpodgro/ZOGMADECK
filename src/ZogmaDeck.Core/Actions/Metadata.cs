@@ -52,6 +52,14 @@ public enum FieldKind
     ObsScene,
     ObsInput,
     Json,
+    /// <summary>Fichier audio : parcourir, bibliothèque de sons intégrée, écoute de l'extrait.</summary>
+    Sound,
+    /// <summary>Position en secondes (double), saisie « m:ss.f » ou en secondes.</summary>
+    Time,
+    /// <summary>Texte multiligne en police à chasse fixe (script).</summary>
+    Code,
+    /// <summary>Jeu installé, choisi dans la liste de la plateforme désignée par <see cref="FieldAttribute.DependsOn"/>.</summary>
+    Game,
 }
 
 /// <summary>
@@ -75,6 +83,8 @@ public sealed class FieldAttribute(string label) : Attribute
     public string? VisibleWhen { get; set; }
     /// <summary>Valeurs (séparées par des virgules) de <see cref="VisibleWhen"/> pour lesquelles le champ est visible.</summary>
     public string? VisibleValues { get; set; }
+    /// <summary>Autre propriété dont dépend le contenu du champ (ex. la plateforme pour la liste des jeux).</summary>
+    public string? DependsOn { get; set; }
 
     public bool IsVisibleFor(object? controllingValue)
     {

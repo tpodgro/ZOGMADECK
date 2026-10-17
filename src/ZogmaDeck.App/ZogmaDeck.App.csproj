@@ -29,6 +29,8 @@
   <ItemGroup>
     <Resource Include="Assets\ZogmaDeck.ico" />
     <Resource Include="Assets\Icons\*.tsv" />
+    <!-- Bibliothèque de sons (tools/generate-sounds.py) -->
+    <Resource Include="Assets\Sounds\*.wav;Assets\Sounds\sounds.tsv" />
     <None Remove="Assets\ZogmaDeck-256.png" />
   </ItemGroup>
 

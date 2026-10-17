@@ -66,34 +66,68 @@ public sealed class OpenAction : DeckAction
     public override Task ExecuteAsync(ActionContext ctx, CancellationToken ct) => ctx.Shell.OpenAsync(Target.Trim(), ct);
 }
 
+public enum SoundRepeatMode
+{
+    [Label("Le rejouer depuis le début")] Restart,
+    [Label("L'arrêter (appuyer à nouveau pour le rejouer)")] Stop,
+    [Label("Le jouer une fois de plus, par-dessus")] Overlap,
+}
+
 [ActionType("playSound", "Jouer un son", Category = "Audio", Glyph = "\uE767", Order = 30,
-    Description = "Joue un fichier audio local (mp3, wav, wma, m4a…) avec un volume réglable.")]
+    Description = "Joue un fichier audio (mp3, wav, wma, m4a…) ou un son de la bibliothèque, en entier ou un extrait.")]
 public sealed class PlaySoundAction : DeckAction
 {
-    [Field("Fichier audio", Kind = FieldKind.FilePath, Order = 1, FileFilter = "Fichiers audio|*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac;*.ogg|Tous les fichiers|*.*")]
+    public const string AudioFilter = "Fichiers audio|*.mp3;*.wav;*.wma;*.m4a;*.aac;*.flac;*.ogg|Tous les fichiers|*.*";
+
+    [Field("Fichier audio", Kind = FieldKind.Sound, Order = 1, FileFilter = AudioFilter)]
     public string Path { get; set; } = "";
 
     [Field("Volume", Kind = FieldKind.Slider, Order = 2, Min = 0, Max = 100, Unit = "%")]
     public int Volume { get; set; } = 80;
 
-    [Field("Attendre la fin du son avant l'étape suivante", Kind = FieldKind.Toggle, Order = 3)]
+    [Field("Si on appuie à nouveau pendant la lecture", Kind = FieldKind.Choice, Order = 3)]
+    public SoundRepeatMode OnRepeat { get; set; } = SoundRepeatMode.Restart;
+
+    [Field("Début de l'extrait", Kind = FieldKind.Time, Order = 4, Hint = "Ex. 1:23.5 (minutes:secondes) ou 83.5 (secondes). Vide = début du fichier.")]
+    public double StartSeconds { get; set; }
+
+    [Field("Fin de l'extrait", Kind = FieldKind.Time, Order = 5, Hint = "Vide = jusqu'à la fin du fichier.")]
+    public double EndSeconds { get; set; }
+
+    [Field("Attendre la fin du son avant l'étape suivante", Kind = FieldKind.Toggle, Order = 6)]
     public bool WaitForEnd { get; set; }
 
-    public override string Describe() => $"Jouer {Quote(System.IO.Path.GetFileName(Path))} ({Volume} %)";
+    public override string Describe()
+    {
+        var segment = StartSeconds > 0 || EndSeconds > 0
+            ? $", {TimeFormat.Format(StartSeconds)} → {(EndSeconds > 0 ? TimeFormat.Format(EndSeconds) : "fin")}"
+            : "";
+        return $"Jouer {Quote(System.IO.Path.GetFileName(Path))} ({Volume} %{segment})";
+    }
 
     public override IEnumerable<string> Validate()
     {
         if (string.IsNullOrWhiteSpace(Path)) yield return "Choisissez un fichier audio.";
         if (Volume is < 0 or > 100) yield return "Le volume doit être compris entre 0 et 100.";
+        if (StartSeconds < 0 || EndSeconds < 0) yield return "Les positions de l'extrait ne peuvent pas être négatives.";
+        if (EndSeconds > 0 && EndSeconds <= StartSeconds) yield return "La fin de l'extrait doit être après son début.";
     }
+
+    public SoundRequest ToRequest(string dataDirectory) => new(
+        Storage.ResourcePaths.Resolve(Path, dataDirectory),
+        Math.Clamp(Volume, 0, 100) / 100.0,
+        WaitForEnd,
+        TimeSpan.FromSeconds(Math.Max(0, StartSeconds)),
+        EndSeconds > StartSeconds ? TimeSpan.FromSeconds(EndSeconds) : null,
+        Owner: this,
+        OnRepeat);
 
     public override IEnumerable<ResourceSlot> GetResources()
     {
         yield return new ResourceSlot(ResourceKind.Media, "Son", () => Path, v => Path = v);
     }
 
-    public override Task ExecuteAsync(ActionContext ctx, CancellationToken ct) =>
-        ctx.Audio.PlayAsync(Storage.ResourcePaths.Resolve(Path, ctx.DataDirectory), Math.Clamp(Volume, 0, 100) / 100.0, WaitForEnd, ct);
+    public override Task ExecuteAsync(ActionContext ctx, CancellationToken ct) => ctx.Audio.PlayAsync(ToRequest(ctx.DataDirectory), ct);
 }
 
 [ActionType("stopSounds", "Arrêter les sons", Category = "Audio", Glyph = "\uE71A", Order = 31,

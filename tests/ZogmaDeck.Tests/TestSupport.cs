@@ -58,9 +58,12 @@ public sealed class FakeServices : IShellService, IInputService, IAudioService, 
         return Task.CompletedTask;
     }
 
-    public Task PlayAsync(string path, double volume, bool waitForEnd, CancellationToken ct)
+    public List<SoundRequest> Sounds { get; } = [];
+
+    public Task PlayAsync(SoundRequest request, CancellationToken ct)
     {
-        Record($"play:{System.IO.Path.GetFileName(path)}@{volume.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}");
+        Sounds.Add(request);
+        Record($"play:{System.IO.Path.GetFileName(request.Path)}@{request.Volume.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}");
         return Task.CompletedTask;
     }
 

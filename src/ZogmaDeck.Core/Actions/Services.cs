@@ -26,10 +26,22 @@ public interface IInputService
     Task TypeTextAsync(string text, int delayBetweenCharsMs, CancellationToken ct);
 }
 
+/// <summary>
+/// Lecture d'un son, en entier ou un extrait (<paramref name="Start"/> à <paramref name="End"/>). <paramref name="Owner"/>
+/// identifie la source (l'action) : un nouvel appui pendant la lecture applique <paramref name="Repeat"/> aux sons
+/// encore joués par la même source.
+/// </summary>
+public sealed record SoundRequest(
+    string Path, double Volume, bool WaitForEnd, TimeSpan Start = default, TimeSpan? End = null, object? Owner = null,
+    SoundRepeatMode Repeat = SoundRepeatMode.Overlap);
+
 public interface IAudioService
 {
-    /// <summary>Joue un fichier. Si <paramref name="waitForEnd"/>, la tâche se termine à la fin de la lecture (l'annulation arrête le son).</summary>
-    Task PlayAsync(string path, double volume, bool waitForEnd, CancellationToken ct);
+    /// <summary>
+    /// Joue un son. Si <see cref="SoundRequest.WaitForEnd"/>, la tâche se termine à la fin de la lecture (l'annulation
+    /// arrête le son). En mode « arrêter », si la même source joue déjà, le son est arrêté et rien n'est rejoué.
+    /// </summary>
+    Task PlayAsync(SoundRequest request, CancellationToken ct);
     void StopAll();
 }
 
