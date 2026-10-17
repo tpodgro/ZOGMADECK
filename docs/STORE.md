@@ -66,6 +66,9 @@ Téléverser `ZogmaDeck-<version>-x64.msix`. Familles d'appareils : **Windows 10
 > • Envoyer des raccourcis clavier et les touches multimédias (lecture/pause, piste suivante, volume)
 > • Saisir du texte, jouer des sons
 > • Piloter OBS Studio : changer de scène, lancer ou arrêter l'enregistrement et le stream, couper une source
+> • TeamSpeak et Discord : couper ou réactiver le micro et le son, rejoindre un salon
+> • Lancer vos jeux Steam, Epic Games, GOG, Ubisoft Connect et Battle.net
+> • Jouer des sons (bibliothèque de sons intégrée, extraits) et exécuter des scripts
 > • Enchaîner plusieurs actions dans un seul bouton, avec délais et gestion des erreurs
 > • Profils multiples, icônes (symboles Windows, emoji, logos d'applications, vos images), couleurs, effet verre
 > • Panneau déplaçable et redimensionnable, thème clair ou sombre, démarrage avec Windows
@@ -105,15 +108,33 @@ les deux tiers supérieurs (le Store peut superposer du texte sur le tiers infé
 > capability because it is a classic desktop app that relies on Win32 APIs not available to app-container apps:
 > RegisterHotKey (global shortcut that shows its button panel), SendInput (sends the keyboard shortcuts, media keys and
 > text configured by the user), SetWinEventHook/SetForegroundWindow (returns focus to the user's previous window before
-> sending keys), Shell_NotifyIcon (notification-area icon), and process launching of user-chosen programs, files and
-> URLs. It collects no data and makes network connections only to the OBS Studio WebSocket address configured by the
-> user. A startup task (disabled by default) can be enabled from the app's settings to start it in the notification area
-> at sign-in.
+> sending keys), Shell_NotifyIcon (notification-area icon), process launching of user-chosen programs, files, URLs,
+> games and user-written scripts, and local IPC with other desktop apps the user chooses to control (OBS Studio
+> WebSocket, TeamSpeak ClientQuery/Remote Apps on 127.0.0.1, the Discord desktop client's local RPC named pipe).
+> It collects no data. Network connections: the OBS address configured by the user, discord.com OAuth2 only if the user
+> sets up the optional Discord integration with their own Discord application, and an optional update check through
+> the Microsoft Store API. A startup task (disabled by default) can be enabled from the app's settings to start it in
+> the notification area at sign-in.
 >
 > How to test: launch ZogmaDeck, press Ctrl+Alt+Space to show the panel; sample profiles are created on first run.
 > Right-click the notification-area icon › "Éditeur…" to edit buttons. No account or credentials are needed.
 
-## 3. Après publication
+## 3. Publier une mise à jour sur le Store
+
+1. Augmentez la version dans `Directory.Build.props` (`<Version>1.4.1</Version>` par exemple ; elle doit toujours
+   augmenter).
+2. Construisez le paquet : `.\build.ps1 -Task msix` → `artifacts\ZogmaDeck-<version>-x64.msix`.
+3. Partner Center › **Applications et jeux** › Zogma Deck › **Vue d'ensemble de l'application** › **Mettre à jour**
+   (ou « Démarrer la mise à jour ») : une nouvelle soumission est créée, copie de la précédente.
+4. Section **Packages** : supprimez l'ancien paquet, déposez le nouveau `.msix`, cochez Windows Desktop.
+5. Facultatif : mettez à jour la **fiche Store** (description, « Nouveautés de cette version », captures).
+6. **Soumettre au Store**. Après certification (souvent quelques heures à 3 jours), le Store installe la mise à jour
+   chez les utilisateurs ; ZogmaDeck affiche aussi « Mettre à jour » dans son menu.
+
+Pour les utilisateurs de l'installateur, publiez la même version en **release GitHub** (étiquette `vX.Y.Z`, avec
+`ZogmaDeck-Setup-X.Y.Z.exe` et l'archive portable) : ZogmaDeck la détecte et propose la mise à jour.
+
+## 4. Après publication
 
 - Les mises à jour se publient en créant une nouvelle soumission avec un paquet de version supérieure.
 - Les utilisateurs de l'installateur gardent leurs données : la version Store utilise et met à jour les fichiers déjà

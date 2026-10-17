@@ -2,15 +2,17 @@
 
 ZogmaDeck est un panneau de boutons qui s'ouvre d'un raccourci clavier, par-dessus vos applications.
 Un clic sur un bouton lance une action : ouvrir un programme, un dossier ou un site, taper un texte,
-envoyer un raccourci, jouer un son, piloter OBS… ou toute une séquence de ces actions.
+envoyer un raccourci, jouer un son, exécuter un script, lancer un jeu, piloter OBS, TeamSpeak ou Discord… ou toute
+une séquence de ces actions.
 
 > Anciennement PocketDeck : vos boutons, profils, images et mot de passe OBS sont repris automatiquement au premier lancement de ZogmaDeck.
 
 ## Démarrer
 
-1. Lancez **ZogmaDeck-Setup.exe** (installation pour votre compte, sans droit administrateur) ou directement la version
-   portable **ZogmaDeck.exe**. Si Windows affiche « Windows a protégé votre ordinateur » (application non signée) :
-   **Informations complémentaires** › **Exécuter quand même**.
+1. Installez **Zogma Deck** depuis le **Microsoft Store** (recommandé : aucune alerte de sécurité, mises à jour
+   automatiques), ou lancez **ZogmaDeck-Setup.exe** (installation pour votre compte, sans droit administrateur) ou la
+   version portable **ZogmaDeck.exe**. Si Windows affiche « Windows a protégé votre ordinateur » (installateur non
+   signé) : **Informations complémentaires** › **Exécuter quand même**.
 2. L'icône ZogmaDeck apparaît dans la zone de notification, près de l'horloge.
 3. Appuyez sur **Ctrl + Alt + Espace** : le panneau s'ouvre au centre de l'écran où vous travaillez.
 
@@ -57,10 +59,14 @@ Tout est **enregistré automatiquement**. Un point d'exclamation rouge signale u
 |---|---|
 | **Lancer une application** | Chemin complet ou nom connu de Windows (`notepad.exe`). Arguments et dossier de travail facultatifs ; par défaut, le dossier du programme. |
 | **Ouvrir un fichier, dossier ou URL** | `https://…`, `C:\Dossier`, un document, ou un lien système comme `ms-settings:apps-volume`. Les variables `%USERPROFILE%`, `%WINDIR%`… fonctionnent. |
-| **Jouer un son** | mp3, wav, wma, m4a, flac. Volume réglable. « Attendre la fin » retient l'étape suivante jusqu'à la fin du son. |
+| **Jouer un son** | Votre fichier (mp3, wav, wma, m4a, flac) ou un des 22 sons de la **bibliothèque intégrée** (klaxon, roulement de tambour, applaudissements, ba dum tss, grillons, trombone triste, succès, échec, compte à rebours…). Bouton **Écouter**. **Extrait** : début et fin (ex. `1:23.5` ou `83.5` secondes) pour ne jouer qu'un passage. **Si on appuie à nouveau** pendant la lecture : rejouer depuis le début, arrêter le son, ou le jouer une fois de plus par-dessus. Liens vers des banques de sons gratuites (Pixabay, Freesound). |
 | **Arrêter les sons** | Coupe tous les sons lancés par ZogmaDeck (aussi dans le menu de l'icône de notification). |
-| **Raccourci clavier** | Cliquez dans la zone puis appuyez sur la combinaison. Les touches multimédias (lecture/pause, volume, piste suivante…) et F13–F24 sont dans « Touche spéciale ». |
+| **Raccourci clavier** | Cliquez dans la zone puis appuyez sur la combinaison : **n'importe quel combo**, y compris plusieurs touches (ex. **Droite + Pavé 1**, **Ctrl + Maj + A + B**) ou un modificateur seul et de son côté (ex. **Ctrl droit**). Les touches sont appuyées dans l'ordre et relâchées dans l'ordre inverse. Les touches multimédias (lecture/pause, volume, piste suivante…) et F13–F24 sont dans « Touche spéciale ». |
 | **Saisir du texte** | Accents, emoji et retours à la ligne inclus. Augmentez le délai entre caractères si l'application cible en perd. |
+| **Exécuter un script** | cmd, Windows PowerShell, PowerShell 7, Python, Node.js, Bash (WSL), ou un fichier de script existant. Fenêtre masquée ou visible ; « Attendre la fin » avec durée maximale ; erreur si le script se termine avec un code différent de 0 (la dernière ligne d'erreur s'affiche). |
+| **Lancer un jeu** | Steam, Epic Games, GOG Galaxy, Ubisoft Connect (liste des jeux installés détectés) ou Battle.net (code du jeu, ex. `WoW`). |
+| **Steam** | Bibliothèque, amis, statut (en ligne, absent, invisible, hors ligne), Big Picture, téléchargements, captures, magasin, paramètres, quitter Steam. |
+| **TeamSpeak**, **Discord** | Voir plus bas. |
 | **OBS Studio** | Voir plus bas. |
 | **Attendre** | En millisecondes (1000 = 1 seconde). |
 | **Changer de profil** | Profil précis, suivant ou précédent. |
@@ -93,12 +99,13 @@ lancer OBS → attendre 6 s → choisir la scène → jouer un jingle.
 | **Emoji** | Tous les emoji de Windows, classés par catégorie, recherche en français (« fusée », « chat », « cœur »…). Affichés en silhouette, dans la couleur du texte. |
 | **Logo d'appli** | Logos de 105 applications et services (OBS, Discord, Spotify, Twitch, YouTube, Steam…). Choisir un logo applique sa couleur officielle. |
 | **Image** | Votre image, ou **Icône d'un programme…** (icône officielle d'une application installée, par exemple Teams ou Photoshop), ou **Icône du programme lancé** par le bouton. |
+| **Texte** | Un texte court à la place d'une icône : **S1**, **S2** pour des scènes, **REC**, **LIVE**… (1 à 4 caractères conseillés, la taille s'adapte). |
 
 - **Boutons** : glisser-déposer pour réordonner (ou **Alt + flèches**), **Ctrl + D** pour dupliquer, **Suppr** pour supprimer.
-- **Apparence** (onglet du bouton) : symbole parmi une soixantaine, image (PNG, JPG, ICO… copiée dans ZogmaDeck), couleur (palette ou code `#RRGGBB`), libellé affiché ou non.
+- **Apparence** (onglet du bouton) : icône, couleur (palette, code `#RRGGBB` ou **Personnaliser…** pour n'importe quelle couleur), libellé affiché ou non. Le même sélecteur de couleur existe pour le fond du panneau.
 - **Après exécution** : masquer le panneau, le garder ouvert, ou suivre le réglage général.
 - **Profils** (colonne de gauche) : créer, dupliquer, renommer, supprimer, réordonner ; **nombre de colonnes** et **taille des boutons** propres à chaque profil.
-- **Réglages** : raccourci global, toujours au premier plan, masquage automatique, thème clair/sombre/selon Windows, démarrage avec Windows.
+- **Réglages** : raccourci global, toujours au premier plan, masquage automatique, accélération graphique (tous décochés par défaut), thème clair/sombre/selon Windows, **couleur principale** (cases, curseurs, boutons d'action : couleur de Windows ou n'importe quelle couleur), démarrage avec Windows, mises à jour.
 
 ## OBS Studio
 
@@ -112,10 +119,47 @@ La connexion s'établit au premier bouton OBS, sans rien faire tourner en arriè
 l'éditeur › onglet OBS ; une erreur de connexion s'affiche en bas du panneau. Le mot de passe est chiffré pour votre compte Windows et n'est
 jamais exporté.
 
+## TeamSpeak
+
+**TeamSpeak 3** (contrôle complet) : dans TeamSpeak, **Outils › Options › Modules** › activez **ClientQuery**, puis
+**Paramètres** et copiez la **clé API**. Collez-la dans ZogmaDeck › éditeur › **Intégrations** › **Tester la connexion**.
+L'action **TeamSpeak** permet alors : basculer/couper/réactiver le micro ou le son, basculer « absent » (avec message),
+se connecter à un serveur (TeamSpeak se lance s'il est fermé), se déconnecter, aller dans un salon, changer de pseudo.
+
+**TeamSpeak 5 / 6** : TeamSpeak n'accepte que des « boutons » d'applications autorisées.
+1. Éditeur › **Intégrations** › **Autoriser dans TeamSpeak**, puis acceptez la demande dans TeamSpeak.
+2. Créez dans ZogmaDeck les boutons voulus (action **TeamSpeak**, version 5/6, commande « couper le micro »…).
+3. Dans TeamSpeak › **Paramètres › Raccourcis**, ajoutez un raccourci pour l'action voulue et, au moment de choisir la
+   touche, appuyez sur le bouton correspondant de ZogmaDeck. Une seule fois par bouton.
+
+La connexion à un serveur fonctionne sans association (lien `ts3server://`).
+
+## Discord
+
+Discord ne laisse piloter son application que par des applications enregistrées chez lui. Configuration unique :
+1. Ouvrez le [portail développeur de Discord](https://discord.com/developers/applications) › **New Application** (nom libre).
+2. Onglet **OAuth2** : copiez le **Client ID** et le **Client Secret** dans ZogmaDeck › éditeur › **Intégrations**, et
+   ajoutez la redirection `http://localhost`. Si Discord le demande, ajoutez votre compte dans **App Testers**.
+3. Lancez l'application Discord, cliquez sur **Autoriser dans Discord** et acceptez.
+
+L'action **Discord** permet : basculer/couper/réactiver le micro, la sourdine, rejoindre un salon vocal (identifiant
+du salon : mode développeur de Discord › clic droit › Copier l'identifiant), le quitter, régler le volume du micro ou
+du son. ZogmaDeck reste connecté à Discord tant qu'il tourne : Discord annule les réglages d'une application qui se
+déconnecte.
+
+## Mises à jour
+
+- **Version Microsoft Store** : le Store met ZogmaDeck à jour automatiquement ; ZogmaDeck le signale aussi.
+- **Installateur ou version portable** : ZogmaDeck vérifie au plus deux fois par jour s'il existe une version plus
+  récente sur GitHub (désactivable dans **Réglages › Mises à jour**).
+
+Quand une version est disponible, une notification s'affiche et le menu de l'icône de notification commence par
+**Mettre à jour…**.
+
 ## Import, export et sauvegardes
 
 - **Exporter** : tous les profils ou seulement celui affiché, avec ou sans réglages. Le fichier `.zogmadeck` contient les images et sons utilisés.
-- **Importer** : ZogmaDeck affiche le contenu et la liste des **ressources introuvables** sur ce poste avant toute modification. Choisissez **Ajouter** ou **Remplacer**. **Un import ne déclenche jamais aucune action.**
+- **Importer** : ZogmaDeck affiche le contenu et la liste des **ressources introuvables** sur ce poste avant toute modification, et signale les **scripts** contenus (n'importez que des fichiers de confiance). Choisissez **Ajouter** ou **Remplacer**. **Un import ne déclenche jamais aucune action.**
 - **Sauvegardes automatiques** : une par jour et avant chaque import, suppression de profil ou restauration ; bouton **Restaurer** dans l'onglet Import / export.
 
 ## Mode portable
@@ -134,4 +178,10 @@ compte Windows, devra être ressaisi sur un autre PC.)
 | « Mot de passe OBS incorrect » | Ressaisissez-le dans l'onglet OBS. |
 | « Fichier introuvable » | Le fichier a été déplacé ou n'existe pas sur ce poste : corrigez le chemin dans l'éditeur. |
 | Fenêtres vides | Laissez **Utiliser l'accélération graphique** décoché (Réglages). |
+| « TeamSpeak 3 ne répond pas » | Lancez TeamSpeak 3 et activez le module ClientQuery (Outils › Options › Modules). |
+| « Clé API TeamSpeak 3 refusée » | Recopiez la clé depuis les paramètres du module ClientQuery. |
+| Un bouton TeamSpeak 5/6 ne fait rien | Associez-le dans TeamSpeak › Paramètres › Raccourcis (voir plus haut). |
+| « Discord ne répond pas » | Lancez l'application Discord (pas la version navigateur). |
+| « Interpréteur introuvable » (script) | Installez Python, Node.js, PowerShell 7 ou WSL selon le langage choisi. |
+| Un jeu n'apparaît pas dans la liste | Saisissez son identifiant (Steam : numéro visible dans l'adresse de sa page du magasin). |
 | Comprendre une erreur | Éditeur › **Diagnostic** › **Ouvrir les journaux**. |

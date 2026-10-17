@@ -2,13 +2,16 @@
 
 Panneau de boutons logiciel pour Windows 11, qui remplace un Stream Deck physique. Un raccourci global
 (par défaut **Ctrl + Alt + Espace**) affiche un petit panneau ; chaque bouton déclenche une action ou une
-séquence d'actions : lancer une application, ouvrir un fichier ou une URL, jouer un son, envoyer un
-raccourci clavier ou du texte, piloter OBS Studio, attendre, changer de profil.
+séquence d'actions : lancer une application, ouvrir un fichier ou une URL, jouer un son (bibliothèque intégrée,
+extraits), envoyer n'importe quelle combinaison de touches ou du texte, exécuter un script (cmd, PowerShell, Python,
+Node.js, Bash/WSL), lancer un jeu (Steam, Epic, GOG, Ubisoft, Battle.net), piloter OBS Studio, TeamSpeak 3/5/6 et
+Discord, attendre, changer de profil.
 
 - Guide utilisateur : [docs/GUIDE-UTILISATEUR.md](docs/GUIDE-UTILISATEUR.md)
 - Panneau en verre dépoli par défaut (voile blanc à 20 % + flou de l'arrière-plan, boutons translucides à pastille colorée), déplaçable, redimensionnable librement (les boutons se répartissent dans la place disponible), apparence personnalisable.
-- Plus de 3 000 icônes : symboles Segoe Fluent Icons, emoji Windows (recherche en français), logos d'applications, ou icône extraite d'un programme installé.
-- Aucun compte, aucune télémétrie, aucun service en ligne. Aucun droit administrateur.
+- Plus de 3 000 icônes : symboles Segoe Fluent Icons, emoji Windows (recherche en français), logos d'applications, icône extraite d'un programme installé, ou texte court (S1, REC…). Sélecteur de couleur libre, couleur principale de l'interface personnalisable.
+- Mises à jour : signalées dans le menu de l'icône (Microsoft Store, ou releases GitHub pour l'installateur).
+- Aucun compte, aucune télémétrie, aucun service en ligne. Aucun droit administrateur. Connexions réseau : voir [docs/PRIVACY.md](docs/PRIVACY.md).
 - Anciennement **PocketDeck** : au premier lancement, ZogmaDeck reprend automatiquement les données de `%APPDATA%\PocketDeck` (configuration, sauvegardes, images, mot de passe OBS chiffré ; pas les journaux), remplace l'ancienne entrée de démarrage avec Windows, et sait importer les anciens fichiers `.pocketdeck`.
 
 ## Choix techniques
@@ -154,7 +157,8 @@ Dossier : `%APPDATA%\ZogmaDeck` (ou `data\` en mode portable).
 | `config.json.bak` | Version précédente, utilisée automatiquement si `config.json` est illisible (le fichier corrompu est mis de côté). |
 | `backups\` | Copie quotidienne et copie avant chaque import, suppression de profil ou restauration (10 dernières). |
 | `assets\` | Images des boutons (copiées à la sélection) et médias importés. |
-| `secrets.dat` | Mot de passe OBS chiffré par DPAPI (compte Windows). Jamais exporté ni journalisé. |
+| `secrets.dat` | Mot de passe OBS, clé API TeamSpeak 3, clé Remote Apps TeamSpeak 5/6, secret et jetons Discord, chiffrés par DPAPI (compte Windows). Jamais exportés ni journalisés. |
+| `assets\sounds\` | Sons de la bibliothèque intégrée choisis pour des boutons (copiés à la sélection). |
 | `logs\` | Journal local, 7 jours. |
 
 ## Tests
@@ -171,7 +175,11 @@ d'authentification officiel, formes des messages, codes d'erreur), client OBS (m
 serveur injoignable, délai dépassé, déconnexion puis reconnexion, ordre des scènes) et **un vrai serveur
 WebSocket local** ; import/export (médias inclus, ressources manquantes, absence de secrets, fusion avec
 renommage et ré-association des liens de profil, archive malveillante) ; DPAPI ; conflit réel de raccourci
-global ; présence de toutes les icônes dans la police installée.
+global ; présence de toutes les icônes dans la police installée ; combinaisons à plusieurs touches ; **lecture audio
+réelle** (extrait arrêté à sa fin, modes rejouer/arrêter/superposer) ; **exécution réelle de scripts** (cmd,
+PowerShell, Python, codes de sortie, durée maximale, annulation) ; lecture des bibliothèques Steam et manifestes Epic ;
+protocoles **TeamSpeak 3 ClientQuery** (vrai serveur TCP local), **TeamSpeak Remote Apps** (vrai WebSocket local) et
+**RPC Discord** (vrai tube nommé local, échange OAuth2 simulé) ; analyse des releases GitHub ; manifeste MSIX.
 
 ## Données tierces
 
@@ -180,10 +188,15 @@ global ; présence de toutes les icônes dans la police installée.
 | `Assets/Icons/brands.tsv` | [Simple Icons](https://simpleicons.org) 16.35.0 (105 logos) | CC0-1.0. Les marques appartiennent à leurs propriétaires et ne servent qu'à identifier l'application lancée. Les marques retirées de Simple Icons à la demande de leurs propriétaires (Microsoft, Adobe, Slack…) ne sont pas incluses : utilisez « Icône d'un programme… ». |
 | `Assets/Icons/emoji.tsv` | Unicode `emoji-test.txt` + noms et mots-clés français CLDR (`cldr-json`) | Licence Unicode v3 |
 | `Assets/Icons/fluent-icons.tsv` | Noms des symboles, documentation Microsoft « Segoe Fluent Icons » | CC BY 4.0 (documentation Microsoft). La police elle-même est fournie par Windows, non redistribuée. |
+| `Assets/Sounds/*.wav` | Sons originaux de synthèse, générés par `tools/generate-sounds.py` | Domaine public (CC0) |
 
 ## Limites connues
 
 - **OBS** : testé contre un serveur obs-websocket simulé (protocole 5, y compris par un vrai WebSocket local), pas contre OBS Studio réel (non installé sur le poste de développement).
+- **TeamSpeak et Discord** : testés contre des serveurs locaux qui reproduisent les protocoles documentés, pas contre les vrais clients. TeamSpeak 5/6 n'expose que des « boutons » à associer dans ses raccourcis (pas de contrôle direct du micro, des salons ni du pseudo). Le RPC de Discord exige une application Discord créée par l'utilisateur (réservé par Discord aux applications approuvées et à leurs testeurs) ; Discord rétablit les réglages vocaux si ZogmaDeck se ferme.
+- **Jeux** : détection testée sur des fichiers d'exemple (Steam installé sans jeu sur le poste de développement ; Epic, GOG, Ubisoft et Battle.net absents). Les codes Battle.net proposés sont les codes courants, non vérifiés un par un. Les commandes de statut Steam (`steam://friends/status/…`) dépendent de la version du client Steam. EA app non pris en charge (pas de lancement documenté).
+- **Sons intégrés** : sons de synthèse vérifiés par analyse (forme d'onde, spectre, niveau), pas à l'écoute.
+- **Mises à jour** : la vérification par le Microsoft Store (API `StoreContext`) ne fonctionne que pour une installation depuis le Store et n'a pas pu être testée hors Store ; la vérification GitHub l'a été contre le dépôt réel.
 - **Frappes simulées** : Windows bloque l'envoi de touches vers une application lancée en administrateur (ZogmaDeck le détecte et l'indique) ; Ctrl+Alt+Suppr ne peut pas être simulé ; certains jeux en plein écran exclusif ignorent les entrées simulées.
 - **Détection de conflits** : `RegisterHotKey` détecte les raccourcis réservés par Windows ou d'autres applications, mais pas ceux interceptés par un hook clavier bas niveau ni les raccourcis internes d'une application.
 - **Formats audio** : ceux de Media Foundation (mp3, wav, wma, m4a/aac, flac). OGG dépend des extensions installées.
