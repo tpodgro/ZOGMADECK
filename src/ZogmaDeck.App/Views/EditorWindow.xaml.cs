@@ -20,12 +20,12 @@ public partial class EditorWindow : Window
         DataContext = vm;
         SourceInitialized += (_, _) => runtime.Theme.ApplyChrome(this);
         PreviewKeyDown += OnPreviewKeyDown;
-        Deactivated += (_, _) => SavePassword(); // un mot de passe saisi n'est jamais perdu
+        Deactivated += (_, _) => SaveAllSecrets(); // un mot de passe ou une clé saisis ne sont jamais perdus
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
-        SavePassword();
+        SaveAllSecrets();
         if (!((App)Application.Current).IsShuttingDown)
         {
             e.Cancel = true;
@@ -121,5 +121,29 @@ public partial class EditorWindow : Window
         if (ObsPassword.Password.Length == 0) return;
         _vm.Obs.SetPassword(ObsPassword.Password);
         ObsPassword.Clear();
+    }
+
+    private void SaveAllSecrets()
+    {
+        SavePassword();
+        SaveSecret(Ts3ApiKeyBox);
+        SaveSecret(DiscordSecretBox);
+    }
+
+    // Champs masqués des intégrations : la clé de stockage est dans Tag ; enregistrés en quittant le champ ou avec Entrée.
+    private void SecretBox_LostFocus(object sender, KeyboardFocusChangedEventArgs e) => SaveSecret((PasswordBox)sender);
+
+    private void SecretBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        SaveSecret((PasswordBox)sender);
+        e.Handled = true;
+    }
+
+    private void SaveSecret(PasswordBox box)
+    {
+        if (box.Password.Length == 0 || box.Tag is not string key) return;
+        _vm.Integrations.SetSecret(key, box.Password);
+        box.Clear();
     }
 }

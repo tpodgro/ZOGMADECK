@@ -27,6 +27,7 @@ public sealed class EditorViewModel : ObservableObject
         _rt = runtime;
         Settings = new SettingsViewModel(runtime);
         Obs = new ObsSettingsViewModel(runtime);
+        Integrations = new IntegrationsViewModel(runtime);
         Backup = new BackupViewModel(runtime, Reload);
         Diagnostics = new DiagnosticsViewModel(runtime);
         Appearance = new AppearanceViewModel(runtime);
@@ -57,6 +58,7 @@ public sealed class EditorViewModel : ObservableObject
     public ObservableCollection<ProfileEditViewModel> Profiles { get; } = [];
     public SettingsViewModel Settings { get; }
     public ObsSettingsViewModel Obs { get; }
+    public IntegrationsViewModel Integrations { get; }
     public BackupViewModel Backup { get; }
     public DiagnosticsViewModel Diagnostics { get; }
     public AppearanceViewModel Appearance { get; }

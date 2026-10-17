@@ -74,6 +74,10 @@ public sealed class SecretStore(string path)
 {
     private static readonly byte[] Entropy = "PocketDeck.Secrets.v1"u8.ToArray();
     public const string ObsPasswordKey = "obsPassword";
+    public const string Ts3ApiKeyKey = "ts3ApiKey";
+    public const string Ts6ApiKeyKey = "ts6ApiKey";
+    public const string DiscordClientSecretKey = "discordClientSecret";
+    public const string DiscordTokensKey = "discordTokens";
 
     public string? Get(string key)
     {

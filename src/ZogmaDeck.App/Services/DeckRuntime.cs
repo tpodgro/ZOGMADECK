@@ -2,6 +2,7 @@ using System.Windows.Threading;
 using ZogmaDeck.Core.Actions;
 using ZogmaDeck.Core.Diagnostics;
 using ZogmaDeck.Core.Execution;
+using ZogmaDeck.Core.Integrations;
 using ZogmaDeck.Core.Model;
 using ZogmaDeck.Core.Obs;
 using ZogmaDeck.Core.Storage;
@@ -47,6 +48,10 @@ public sealed class DeckRuntime : IProfileNavigator
         Startup = startup;
         Theme = theme;
         Games = new GameService(shell);
+        Ts3 = new Ts3ClientQuery(() => secrets.Get(SecretStore.Ts3ApiKeyKey));
+        Ts6 = new Ts6RemoteApps(() => secrets.Get(SecretStore.Ts6ApiKeyKey), key => secrets.Set(SecretStore.Ts6ApiKeyKey, key.Length == 0 ? null : key));
+        TeamSpeak = new TeamSpeakService(Ts3, Ts6, shell);
+        Discord = new DiscordRpcClient(new ViewModels.DiscordCredentials(this));
         _saveTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(700), DispatcherPriority.Background, (_, _) => SaveNow(), Dispatcher.CurrentDispatcher);
         _saveTimer.Stop();
     }
@@ -64,6 +69,10 @@ public sealed class DeckRuntime : IProfileNavigator
     public StartupService Startup { get; }
     public ThemeService Theme { get; }
     public GameService Games { get; }
+    public Ts3ClientQuery Ts3 { get; }
+    public Ts6RemoteApps Ts6 { get; }
+    public TeamSpeakService TeamSpeak { get; }
+    public DiscordRpcClient Discord { get; }
     public IPanelHost? Panel { get; set; }
     public TrayIcon? Tray { get; set; }
 
@@ -188,6 +197,8 @@ public sealed class DeckRuntime : IProfileNavigator
         Profiles = this,
         Focus = Focus,
         Games = Games,
+        TeamSpeak = TeamSpeak,
+        Discord = Discord,
         HidePanelAfterRun = hidePanel,
         DataDirectory = Paths.DataDirectory,
     };

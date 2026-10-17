@@ -28,6 +28,7 @@ public static class ConfigValidator
             s.AccentColor = null;
         }
         s.Obs ??= new ObsSettings();
+        s.Discord ??= new DiscordSettings();
         if (string.IsNullOrWhiteSpace(s.Obs.Host)) s.Obs.Host = "localhost";
         if (s.Obs.Port is < 1 or > 65535)
         {

@@ -40,7 +40,14 @@ public sealed class AppSettings
     /// <summary>Couleur principale de l'interface (#RRGGBB) ; null = couleur d'accentuation de Windows.</summary>
     public string? AccentColor { get; set; }
     public ObsSettings Obs { get; set; } = new();
+    public DiscordSettings Discord { get; set; } = new();
     public PanelAppearance Panel { get; set; } = new();
+}
+
+/// <summary>Application Discord de l'utilisateur (portail développeur). Le secret et les jetons sont stockés chiffrés, à part.</summary>
+public sealed class DiscordSettings
+{
+    public string? ClientId { get; set; }
 }
 
 public enum PanelPositionMode

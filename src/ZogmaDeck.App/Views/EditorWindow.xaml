@@ -892,6 +892,114 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ================= INTÉGRATIONS ================= -->
+            <TabItem Header="Intégrations">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Integrations}">
+                    <StackPanel Margin="4,12,4,12" MaxWidth="760" HorizontalAlignment="Left" MinWidth="560">
+                        <Border Style="{StaticResource Pd.Card}">
+                            <StackPanel>
+                                <TextBlock Text="TeamSpeak 3" Style="{StaticResource Pd.Section}" />
+                                <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,0,0,10"
+                                           Text="ZogmaDeck pilote TeamSpeak 3 par son module ClientQuery (local, port 25639) : micro, son, absence, connexion, déconnexion, salons, pseudo. Dans TeamSpeak 3 : Outils › Options › Modules › activez « ClientQuery », puis « Paramètres » et copiez la clé API." />
+                                <TextBlock Text="Clé API ClientQuery" Style="{StaticResource Pd.Label}" />
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="Effacer" Margin="6,0,0,0" Command="{Binding ClearTs3KeyCommand}" />
+                                    <PasswordBox x:Name="Ts3ApiKeyBox" Tag="ts3ApiKey" AutomationProperties.Name="Clé API TeamSpeak 3"
+                                                 KeyDown="SecretBox_KeyDown" LostKeyboardFocus="SecretBox_LostFocus" />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource Pd.Hint}" Text="{Binding Ts3KeyStatus}" />
+                                <Button Margin="0,10,0,0" HorizontalAlignment="Left" Style="{StaticResource AccentButtonStyle}" Content="Tester la connexion" Command="{Binding Ts3TestCommand}" />
+                                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding Ts3Result}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource Pd.Success}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Ts3IsError}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource Pd.Error}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Pd.Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="TeamSpeak 5 / 6" Style="{StaticResource Pd.Section}" />
+                                <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,0,0,10" LineHeight="20">
+                                    <Run Text="TeamSpeak 5/6 accepte des « Remote Apps » (Paramètres › Remote Apps, port 5899). Les commandes de ZogmaDeck y arrivent comme des boutons :" /><LineBreak />
+                                    <Run Text="1. Cliquez sur « Autoriser dans TeamSpeak » et acceptez la demande dans TeamSpeak." /><LineBreak />
+                                    <Run Text="2. Dans TeamSpeak › Paramètres › Raccourcis, ajoutez un raccourci pour l'action voulue (ex. couper le micro), puis appuyez sur le bouton correspondant de ZogmaDeck pour l'associer." /><LineBreak />
+                                    <Run Text="La connexion à un serveur passe par un lien ts3server:// et ne demande aucune association." />
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource Pd.Hint}" Text="{Binding Ts6Status}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Style="{StaticResource AccentButtonStyle}" Content="Autoriser dans TeamSpeak" Command="{Binding Ts6PairCommand}" Margin="0,0,8,0" />
+                                    <Button Content="Oublier l'autorisation" Command="{Binding Ts6ForgetCommand}" />
+                                </StackPanel>
+                                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding Ts6Result}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource Pd.Success}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Ts6IsError}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource Pd.Error}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Pd.Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Discord" Style="{StaticResource Pd.Section}" />
+                                <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,0,0,10" LineHeight="20">
+                                    <Run Text="Discord réserve son contrôle local (RPC) aux applications enregistrées. Configuration unique et gratuite :" /><LineBreak />
+                                    <Run Text="1. Sur le portail développeur de Discord, créez une application (nom libre, ex. « ZogmaDeck »)." /><LineBreak />
+                                    <Run Text="2. Onglet OAuth2 : copiez le « Client ID » et le « Client Secret » ci-dessous, et ajoutez la redirection http://localhost." /><LineBreak />
+                                    <Run Text="3. Onglet App Testers : ajoutez votre propre compte Discord si Discord le demande." /><LineBreak />
+                                    <Run Text="4. Lancez l'application Discord, cliquez sur « Autoriser dans Discord » et acceptez la demande." />
+                                </TextBlock>
+                                <TextBlock FontSize="12" Margin="0,0,0,10">
+                                    <Hyperlink Command="{Binding OpenLinkCommand}" CommandParameter="https://discord.com/developers/applications">Ouvrir le portail développeur de Discord</Hyperlink>
+                                </TextBlock>
+                                <TextBlock Text="Client ID (identifiant de l'application)" Style="{StaticResource Pd.Label}" />
+                                <TextBox Text="{Binding DiscordClientId, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="Identifiant de l'application Discord" />
+                                <TextBlock Text="Client Secret" Style="{StaticResource Pd.Label}" Margin="0,10,0,4" />
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="Effacer" Margin="6,0,0,0" Command="{Binding ClearDiscordSecretCommand}" />
+                                    <PasswordBox x:Name="DiscordSecretBox" Tag="discordClientSecret" AutomationProperties.Name="Secret de l'application Discord"
+                                                 KeyDown="SecretBox_KeyDown" LostKeyboardFocus="SecretBox_LostFocus" />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource Pd.Hint}" Text="{Binding DiscordSecretStatus}" />
+                                <TextBlock Style="{StaticResource Pd.Hint}" Text="{Binding DiscordStatus}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Style="{StaticResource AccentButtonStyle}" Content="Autoriser dans Discord" Command="{Binding DiscordAuthorizeCommand}" Margin="0,0,8,0" />
+                                    <Button Content="Oublier l'autorisation" Command="{Binding DiscordForgetCommand}" />
+                                </StackPanel>
+                                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding DiscordResult}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource Pd.Success}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DiscordIsError}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource Pd.Error}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,8,0,0"
+                                           Text="Le secret et l'autorisation sont chiffrés sur ce poste et jamais exportés. Seules l'autorisation et son renouvellement contactent discord.com ; les commandes restent locales. ZogmaDeck garde la connexion à Discord ouverte : Discord annule les réglages vocaux d'une application qui se déconnecte." />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- ================= SAUVEGARDE ================= -->
             <TabItem Header="Import / export">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Backup}">

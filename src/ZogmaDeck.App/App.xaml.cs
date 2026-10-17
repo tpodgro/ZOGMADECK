@@ -163,7 +163,7 @@ public partial class App : Application
         if (editorIndex >= 0)
         {
             OpenEditor();
-            if (editorIndex + 1 < args.Length && int.TryParse(args[editorIndex + 1], out var tab)) _editorVm!.SelectedTab = Math.Clamp(tab, 0, 5);
+            if (editorIndex + 1 < args.Length && int.TryParse(args[editorIndex + 1], out var tab)) _editorVm!.SelectedTab = Math.Clamp(tab, 0, 6);
         }
         else if (!startHidden) _panel.ShowPanel(fromHotkey: false);
     }
@@ -270,6 +270,7 @@ public partial class App : Application
             {
                 var dispose = _rt.Obs.DisposeAsync().AsTask();
                 dispose.Wait(TimeSpan.FromSeconds(2));
+                _rt.Discord.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(1));
             }
         }
         catch (Exception ex)
