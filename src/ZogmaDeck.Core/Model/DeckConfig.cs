@@ -37,6 +37,8 @@ public sealed class AppSettings
     public bool HideOnDeactivate { get; set; }
     /// <summary>Rendu WPF par le GPU (prend effet au redémarrage). Désactivé par défaut.</summary>
     public bool HardwareAcceleration { get; set; }
+    /// <summary>Recherche automatique des mises à jour (Microsoft Store ou GitHub), au plus deux fois par jour.</summary>
+    public bool CheckForUpdates { get; set; } = true;
     /// <summary>Couleur principale de l'interface (#RRGGBB) ; null = couleur d'accentuation de Windows.</summary>
     public string? AccentColor { get; set; }
     public ObsSettings Obs { get; set; } = new();

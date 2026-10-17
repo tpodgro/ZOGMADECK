@@ -141,6 +141,15 @@ public partial class App : Application
 
         if (config.Settings.Obs.ConnectOnStartup) _ = ConnectObsOnceAsync(obs);
 
+        // --- Mises à jour (Store ou GitHub), première vérification 90 s après le démarrage ---
+        var messages = _messages;
+        var updates = new UpdateService(() => rt.Config.Settings.CheckForUpdates, () => messages.Handle);
+        updates.Found += (_, u) => _tray?.ShowBalloon("Mise à jour disponible",
+            (u.FromStore ? "Une nouvelle version de ZogmaDeck est disponible dans le Microsoft Store." : $"ZogmaDeck {u.Version} est disponible.") +
+            " Clic droit sur l'icône › Mettre à jour.");
+        rt.Updates = updates;
+        updates.Start();
+
         _instance.ListenForActivation(() => Dispatcher.BeginInvoke(() => _panel.ShowPanel(fromHotkey: false)));
         rt.ActiveProfileChanged += (_, _) => UpdateTrayTooltip();
         rt.SettingsChanged += (_, _) => UpdateTrayTooltip();
@@ -210,6 +219,11 @@ public partial class App : Application
         var menu = new ContextMenu { Placement = PlacementMode.MousePoint };
         var hk = KeyChord.TryParse(rt.Config.Settings.Hotkey, out var c, out _) ? c.ToDisplayString() : "";
 
+        if (rt.Updates?.Available is { } update)
+        {
+            menu.Items.Add(Item(update.MenuText, () => _ = rt.Shell.OpenAsync(update.Url, CancellationToken.None), bold: true));
+            menu.Items.Add(new Separator());
+        }
         menu.Items.Add(Item("Afficher le panneau", () => _panel?.ShowPanel(false), hk, bold: true));
         menu.Items.Add(Item("Éditeur…", () => OpenEditor()));
         menu.Items.Add(new Separator());
@@ -263,6 +277,7 @@ public partial class App : Application
     {
         try
         {
+            _rt?.Updates?.Stop();
             _rt?.CancelAll();
             _rt?.Audio.StopAll();
             _rt?.Flush();

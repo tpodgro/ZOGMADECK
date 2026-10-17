@@ -74,6 +74,7 @@ public sealed class DeckRuntime : IProfileNavigator
     public TeamSpeakService TeamSpeak { get; }
     public DiscordRpcClient Discord { get; }
     public IPanelHost? Panel { get; set; }
+    public UpdateService? Updates { get; set; }
     public TrayIcon? Tray { get; set; }
 
     public string? LastSaveError { get; private set; }

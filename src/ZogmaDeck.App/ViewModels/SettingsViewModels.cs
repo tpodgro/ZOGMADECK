@@ -31,10 +31,57 @@ public sealed class SettingsViewModel : ObservableObject
         OpenLogsCommand = new RelayCommand(() => OpenFolder(_rt.Paths.LogDirectory));
         ResetHotkeyCommand = new RelayCommand(() => Hotkey = AppSettings.DefaultHotkey);
         SetAccentCommand = new RelayCommand(p => { if (p is string hex) AccentText = hex; });
+        CheckUpdatesNowCommand = new AsyncCommand(async () =>
+        {
+            if (_rt.Updates is not { } u) return;
+            UpdateStatus = "Recherche en cours…";
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            await u.CheckAsync(cts.Token);
+            RefreshUpdate();
+        });
+        InstallUpdateCommand = new RelayCommand(() =>
+        {
+            if (_rt.Updates?.Available is { } a) _ = _rt.Shell.OpenAsync(a.Url, CancellationToken.None);
+        });
+        if (_rt.Updates is { } updates) updates.Checked += (_, _) => RefreshUpdate();
         _accentText = S.AccentColor ?? "#2F6FDB";
     }
 
     private string _accentText;
+    private string? _updateStatus;
+
+    public ICommand CheckUpdatesNowCommand { get; }
+    public ICommand InstallUpdateCommand { get; }
+    public string CurrentVersionText => $"Version installée : {UpdateService.CurrentVersion.ToString(3)}" +
+                                        (PackageInfo.IsPackaged ? " (Microsoft Store)" : "");
+    public bool HasUpdate => _rt.Updates?.Available is not null;
+    public string? UpdateButtonText => _rt.Updates?.Available?.MenuText;
+
+    public bool CheckForUpdates
+    {
+        get => S.CheckForUpdates;
+        set
+        {
+            if (S.CheckForUpdates == value) return;
+            S.CheckForUpdates = value;
+            OnPropertyChanged();
+            _rt.NotifySettingsChanged();
+        }
+    }
+
+    public string? UpdateStatus
+    {
+        get => _updateStatus ?? _rt.Updates?.LastResult;
+        private set => Set(ref _updateStatus, value);
+    }
+
+    private void RefreshUpdate()
+    {
+        _updateStatus = null;
+        OnPropertyChanged(nameof(UpdateStatus));
+        OnPropertyChanged(nameof(HasUpdate));
+        OnPropertyChanged(nameof(UpdateButtonText));
+    }
     public ICommand SetAccentCommand { get; }
     public static IReadOnlyList<string> AccentPalette => ColorHelper.Palette;
 

@@ -154,13 +154,13 @@ internal static class PackagedStartupTask
     }
 
     /// <summary>Attend la fin d'une opération asynchrone WinRT (quelques millisecondes ; appel ponctuel, pas de scrutation continue).</summary>
-    private static void Wait(IntPtr operation)
+    internal static void Wait(IntPtr operation, TimeSpan? timeout = null)
     {
         var iid = IidAsyncInfo;
         Check(Marshal.QueryInterface(operation, in iid, out var info));
         try
         {
-            var deadline = DateTime.UtcNow + Timeout;
+            var deadline = DateTime.UtcNow + (timeout ?? Timeout);
             while (true)
             {
                 Check(Invoke<OutInt>(info, InfoGetStatus)(info, out var status));
@@ -183,35 +183,35 @@ internal static class PackagedStartupTask
         }
     }
 
-    private static T Invoke<T>(IntPtr comObject, int slot) where T : Delegate
+    internal static T Invoke<T>(IntPtr comObject, int slot) where T : Delegate
     {
         var vtable = Marshal.ReadIntPtr(comObject);
         return Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(vtable, slot * IntPtr.Size));
     }
 
-    private static void Check(int hr)
+    internal static void Check(int hr)
     {
         if (hr < 0) Marshal.ThrowExceptionForHR(hr);
     }
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate int GetAsyncFn(IntPtr self, IntPtr taskId, out IntPtr operation);
+    internal delegate int GetAsyncFn(IntPtr self, IntPtr taskId, out IntPtr operation);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate int OutPtr(IntPtr self, out IntPtr value);
+    internal delegate int OutPtr(IntPtr self, out IntPtr value);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate int OutInt(IntPtr self, out int value);
+    internal delegate int OutInt(IntPtr self, out int value);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate int NoArgs(IntPtr self);
+    internal delegate int NoArgs(IntPtr self);
 
     [DllImport("combase.dll", CharSet = CharSet.Unicode)]
-    private static extern int WindowsCreateString(string sourceString, int length, out IntPtr hstring);
+    internal static extern int WindowsCreateString(string sourceString, int length, out IntPtr hstring);
 
     [DllImport("combase.dll")]
-    private static extern int WindowsDeleteString(IntPtr hstring);
+    internal static extern int WindowsDeleteString(IntPtr hstring);
 
     [DllImport("combase.dll")]
-    private static extern int RoGetActivationFactory(IntPtr activatableClassId, ref Guid iid, out IntPtr factory);
+    internal static extern int RoGetActivationFactory(IntPtr activatableClassId, ref Guid iid, out IntPtr factory);
 }

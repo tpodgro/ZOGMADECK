@@ -253,3 +253,37 @@ public class AppearanceTests
         Assert.Null(config.Settings.AccentColor);
     }
 }
+
+public class UpdateTests
+{
+    private static string Release(string tag, bool pre = false) =>
+        $$"""{"tag_name":"{{tag}}","html_url":"https://github.com/tpodgro/ZOGMADECK/releases/tag/{{tag}}","draft":false,"prerelease":{{(pre ? "true" : "false")}}}""";
+
+    [Theory]
+    [InlineData("v1.4.1", "1.4.1")]
+    [InlineData("1.5.0", "1.5.0")]
+    [InlineData("v2.0", "2.0.0")]
+    public void NewerRelease_IsReported(string tag, string expected)
+    {
+        var u = UpdateService.ParseRelease(Release(tag), new Version(1, 4, 0));
+        Assert.NotNull(u);
+        Assert.Equal(expected, u.Version);
+        Assert.False(u.FromStore);
+        Assert.StartsWith("https://github.com/tpodgro/ZOGMADECK/releases/", u.Url);
+    }
+
+    [Theory]
+    [InlineData("v1.4.0", false)]
+    [InlineData("v1.3.0", false)]
+    [InlineData("v9.0.0", true)]
+    [InlineData("nouvelle-version", false)]
+    public void SameOlderPrereleaseOrInvalid_IsIgnored(string tag, bool prerelease) =>
+        Assert.Null(UpdateService.ParseRelease(Release(tag, prerelease), new Version(1, 4, 0)));
+
+    [Fact]
+    public void ForeignUrl_IsReplacedByReleasesPage()
+    {
+        var u = UpdateService.ParseRelease("""{"tag_name":"v3.0.0","html_url":"https://exemple.com/piege"}""", new Version(1, 4, 0));
+        Assert.Equal(UpdateService.ReleasesPage, u!.Url);
+    }
+}
