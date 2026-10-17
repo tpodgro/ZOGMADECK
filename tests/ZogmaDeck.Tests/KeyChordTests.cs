@@ -25,7 +25,7 @@ public class KeyChordTests
     [InlineData("", "Aucune touche")]
     [InlineData("Ctrl+Alt", "touche principale")]
     [InlineData("Ctrl+Truc", "Touche inconnue")]
-    [InlineData("A+B", "Une seule touche")]
+    [InlineData("A+A", "deux fois")]
     [InlineData("A+Ctrl", "précéder")]
     public void Parse_InvalidChords_GiveFrenchErrors(string text, string expected)
     {
@@ -59,5 +59,41 @@ public class KeyChordTests
         Assert.Equal(names.Count, names.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         foreach (var k in VirtualKeys.Keys)
             Assert.Equal(k.Vk, KeyChord.Parse(k.Name).Key.Vk);
+    }
+
+    [Fact]
+    public void SeveralMainKeys_AreKept_InPressOrder()
+    {
+        var chord = KeyChord.Parse("Right+Num1");
+        Assert.Equal(KeyModifiers.None, chord.Modifiers);
+        Assert.Equal(["Right", "Num1"], chord.Keys.Select(k => k.Name));
+        Assert.False(chord.IsSingleKey);
+        Assert.Equal("Droite + Pavé 1", chord.ToDisplayString());
+        Assert.Equal(chord, KeyChord.Parse(chord.ToString()));
+        Assert.NotEqual(chord, KeyChord.Parse("Num1+Right"));
+
+        var withMods = KeyChord.Parse("Ctrl+Shift+A+B");
+        Assert.Equal(KeyModifiers.Ctrl | KeyModifiers.Shift, withMods.Modifiers);
+        Assert.Equal("Ctrl+Shift+A+B", withMods.ToString());
+    }
+
+    [Fact]
+    public void SideSpecificModifier_CanBeUsedAlone()
+    {
+        var chord = KeyChord.Parse("RightCtrl");
+        Assert.True(chord.IsSingleKey);
+        Assert.Equal(0xA3, chord.Key.Vk);
+        Assert.True(chord.Key.Extended);
+        Assert.Equal("Ctrl droit", chord.ToDisplayString());
+        Assert.Equal(0xA0, KeyChord.Parse("LeftShift").Key.Vk);
+    }
+
+    [Fact]
+    public void GlobalHotkey_WithSeveralMainKeys_IsResetByValidator()
+    {
+        var config = new Core.Model.DeckConfig { Settings = { Hotkey = "Ctrl+A+B" }, Profiles = [new Core.Model.Profile()] };
+        var warnings = Core.Storage.ConfigValidator.Normalize(config);
+        Assert.Equal(Core.Model.AppSettings.DefaultHotkey, config.Settings.Hotkey);
+        Assert.Contains(warnings, w => w.Contains("une seule touche principale"));
     }
 }

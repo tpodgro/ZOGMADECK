@@ -5,7 +5,7 @@ using ZogmaDeck.Native;
 
 namespace ZogmaDeck.Services;
 
-/// <summary>Simulation clavier via SendInput. Chaque combinaison est envoyée en un seul appel (appui + relâchement), sans touche bloquée.</summary>
+/// <summary>Simulation clavier via SendInput. Chaque combinaison est envoyée en un seul appel (appuis + relâchements), sans touche bloquée.</summary>
 public sealed class InputService : IInputService
 {
     private static readonly int InputSize = Marshal.SizeOf<Win32.INPUT>();
@@ -21,8 +21,9 @@ public sealed class InputService : IInputService
 
         var inputs = new List<Win32.INPUT>();
         foreach (var (vk, ext) in mods) inputs.Add(Key(vk, ext, up: false));
-        inputs.Add(Key(chord.Key.Vk, chord.Key.Extended, up: false));
-        inputs.Add(Key(chord.Key.Vk, chord.Key.Extended, up: true));
+        // Touches principales appuyées dans l'ordre (ex. Droite puis Pavé 1), relâchées dans l'ordre inverse.
+        foreach (var k in chord.Keys) inputs.Add(Key(k.Vk, k.Extended, up: false));
+        for (var i = chord.Keys.Count - 1; i >= 0; i--) inputs.Add(Key(chord.Keys[i].Vk, chord.Keys[i].Extended, up: true));
         for (var i = mods.Count - 1; i >= 0; i--) inputs.Add(Key(mods[i].Vk, mods[i].Ext, up: true));
         Send(inputs.ToArray());
         return Task.CompletedTask;

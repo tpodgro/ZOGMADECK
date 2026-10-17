@@ -8,7 +8,9 @@ namespace ZogmaDeck.Controls;
 /// <summary>
 /// Zone de capture d'une combinaison de touches. Pendant la capture, le raccourci global est suspendu
 /// (événements <see cref="CaptureStarted"/> / <see cref="CaptureEnded"/>) pour pouvoir saisir n'importe quelle combinaison.
-/// Tab et Maj+Tab sans autre modificateur gardent leur rôle de navigation.
+/// Toutes les touches appuyées ensemble sont enregistrées dans leur ordre d'appui (ex. Droite puis Pavé 1) ; un
+/// modificateur appuyé puis relâché seul est enregistré avec son côté (ex. « Ctrl droit »).
+/// Tab et Maj+Tab, en début de saisie, gardent leur rôle de navigation.
 /// </summary>
 public sealed class KeyChordBox : TextBox
 {
@@ -20,6 +22,11 @@ public sealed class KeyChordBox : TextBox
     public static event EventHandler? CaptureEnded;
 
     private bool _capturing;
+    // Geste en cours : du premier appui jusqu'au relâchement de toutes les touches.
+    private readonly HashSet<Key> _down = [];
+    private readonly List<KeyInfo> _keys = [];
+    private readonly List<KeyInfo> _modifierKeys = [];
+    private KeyModifiers _modifiers;
 
     public KeyChordBox()
     {
@@ -43,6 +50,7 @@ public sealed class KeyChordBox : TextBox
     {
         base.OnGotKeyboardFocus(e);
         _capturing = true;
+        ResetGesture();
         CaptureStarted?.Invoke(this, EventArgs.Empty);
         Text = "Appuyez sur la combinaison…";
     }
@@ -50,6 +58,7 @@ public sealed class KeyChordBox : TextBox
     protected override void OnLostKeyboardFocus(KeyboardFocusChangedEventArgs e)
     {
         base.OnLostKeyboardFocus(e);
+        ResetGesture();
         if (_capturing)
         {
             _capturing = false;
@@ -58,55 +67,96 @@ public sealed class KeyChordBox : TextBox
         UpdateText();
     }
 
+    private static Key RealKey(KeyEventArgs e) => e.Key switch
+    {
+        Key.System => e.SystemKey,
+        Key.ImeProcessed => e.ImeProcessedKey,
+        Key.DeadCharProcessed => e.DeadCharProcessedKey,
+        _ => e.Key,
+    };
+
+    private static bool IsModifier(Key key) =>
+        key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin;
+
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
-        var key = e.Key switch
-        {
-            Key.System => e.SystemKey,
-            Key.ImeProcessed => e.ImeProcessedKey,
-            Key.DeadCharProcessed => e.DeadCharProcessedKey,
-            _ => e.Key,
-        };
-        var mods = Keyboard.Modifiers;
-        var win = Keyboard.IsKeyDown(Key.LWin) || Keyboard.IsKeyDown(Key.RWin);
-
-        if (key == Key.Tab && (mods & ~ModifierKeys.Shift) == ModifierKeys.None && !win)
+        var key = RealKey(e);
+        if (key == Key.Tab && _down.Count == 0 && (Keyboard.Modifiers & ~ModifierKeys.Shift) == ModifierKeys.None && !WinDown())
         {
             base.OnPreviewKeyDown(e); // navigation
             return;
         }
         e.Handled = true;
+        if (e.IsRepeat || !_down.Add(key)) return;
 
-        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin)
+        var info = VirtualKeys.FromVk(KeyInterop.VirtualKeyFromKey(key));
+        if (IsModifier(key))
         {
-            Text = Describe(mods, win) + " + …";
+            if (info is not null && !_modifierKeys.Contains(info)) _modifierKeys.Add(info);
+            if (_keys.Count == 0) Text = DescribeModifiers(CurrentModifiers()) + " + …";
             return;
         }
-
-        var vk = KeyInterop.VirtualKeyFromKey(key);
-        var info = VirtualKeys.FromVk(vk);
         if (info is null)
         {
             Text = "Touche non prise en charge : utilisez la liste « Touche spéciale ».";
             return;
         }
+        if (_keys.Count >= KeyChord.MaxKeys || _keys.Contains(info)) return;
+        // Les modificateurs tenus au moment de la première touche s'appliquent à toute la combinaison.
+        if (_keys.Count == 0) _modifiers = CurrentModifiers();
+        _keys.Add(info);
+        Chord = new KeyChord(_modifiers, _keys).ToString();
+        UpdateText();
+    }
+
+    protected override void OnPreviewKeyUp(KeyEventArgs e)
+    {
+        var key = RealKey(e);
+        if (!_down.Remove(key))
+        {
+            base.OnPreviewKeyUp(e);
+            return;
+        }
+        e.Handled = true; // évite aussi l'activation du menu par Alt
+        if (_down.Count > 0) return;
+
+        // Tout est relâché : si seuls des modificateurs ont été appuyés, on enregistre ces touches elles-mêmes.
+        if (_keys.Count == 0 && _modifierKeys.Count > 0)
+        {
+            Chord = new KeyChord(KeyModifiers.None, _modifierKeys.Take(KeyChord.MaxKeys)).ToString();
+            UpdateText();
+        }
+        ResetGesture();
+    }
+
+    private void ResetGesture()
+    {
+        _down.Clear();
+        _keys.Clear();
+        _modifierKeys.Clear();
+        _modifiers = KeyModifiers.None;
+    }
+
+    private static bool WinDown() => Keyboard.IsKeyDown(Key.LWin) || Keyboard.IsKeyDown(Key.RWin);
+
+    private static KeyModifiers CurrentModifiers()
+    {
+        var mods = Keyboard.Modifiers;
         var km = KeyModifiers.None;
         if (mods.HasFlag(ModifierKeys.Control)) km |= KeyModifiers.Ctrl;
         if (mods.HasFlag(ModifierKeys.Alt)) km |= KeyModifiers.Alt;
         if (mods.HasFlag(ModifierKeys.Shift)) km |= KeyModifiers.Shift;
-        if (win) km |= KeyModifiers.Win;
-
-        Chord = new KeyChord(km, info).ToString();
-        UpdateText();
+        if (WinDown()) km |= KeyModifiers.Win;
+        return km;
     }
 
-    private static string Describe(ModifierKeys mods, bool win)
+    private static string DescribeModifiers(KeyModifiers m)
     {
         var parts = new List<string>();
-        if (mods.HasFlag(ModifierKeys.Control)) parts.Add("Ctrl");
-        if (mods.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
-        if (mods.HasFlag(ModifierKeys.Shift)) parts.Add("Maj");
-        if (win) parts.Add("Win");
+        if (m.HasFlag(KeyModifiers.Ctrl)) parts.Add("Ctrl");
+        if (m.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
+        if (m.HasFlag(KeyModifiers.Shift)) parts.Add("Maj");
+        if (m.HasFlag(KeyModifiers.Win)) parts.Add("Win");
         return string.Join(" + ", parts);
     }
 
@@ -118,4 +168,3 @@ public sealed class KeyChordBox : TextBox
             : KeyChord.TryParse(Chord, out var c, out _) ? c.ToDisplayString() : Chord;
     }
 }
-

@@ -15,8 +15,9 @@ public static class ConfigValidator
 
         config.Settings ??= new AppSettings();
         var s = config.Settings;
-        if (!KeyChord.TryParse(s.Hotkey, out _, out var err))
+        if (!KeyChord.TryParse(s.Hotkey, out var hk, out var err) || !hk.IsSingleKey)
         {
+            if (err.Length == 0) err = "une seule touche principale est possible";
             w.Add($"Raccourci global invalide ({err}) : retour à {AppSettings.DefaultHotkey}.");
             s.Hotkey = AppSettings.DefaultHotkey;
         }

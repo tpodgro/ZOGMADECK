@@ -94,6 +94,11 @@ public sealed class HotkeyService : IDisposable
 
     private bool TryRegister(int id, KeyChord chord, out string error)
     {
+        if (!chord.IsSingleKey)
+        {
+            error = $"Windows n'accepte qu'une seule touche principale pour le raccourci d'affichage (avec Ctrl, Alt, Maj ou Win) : {chord.ToDisplayString()} n'est pas possible.";
+            return false;
+        }
         uint mods = Win32.MOD_NOREPEAT;
         if (chord.Modifiers.HasFlag(KeyModifiers.Ctrl)) mods |= Win32.MOD_CONTROL;
         if (chord.Modifiers.HasFlag(KeyModifiers.Alt)) mods |= Win32.MOD_ALT;

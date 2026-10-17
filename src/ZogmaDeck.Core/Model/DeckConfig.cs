@@ -31,10 +31,10 @@ public sealed class AppSettings
 
     public string Hotkey { get; set; } = DefaultHotkey;
     public ThemePreference Theme { get; set; } = ThemePreference.System;
-    public bool AlwaysOnTop { get; set; } = true;
+    public bool AlwaysOnTop { get; set; }
     public bool StartWithWindows { get; set; }
-    public bool HideAfterAction { get; set; } = true;
-    public bool HideOnDeactivate { get; set; } = true;
+    public bool HideAfterAction { get; set; }
+    public bool HideOnDeactivate { get; set; }
     /// <summary>Rendu WPF par le GPU (prend effet au redémarrage). Désactivé par défaut.</summary>
     public bool HardwareAcceleration { get; set; }
     public ObsSettings Obs { get; set; } = new();

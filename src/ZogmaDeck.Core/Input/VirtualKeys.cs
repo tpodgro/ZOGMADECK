@@ -94,6 +94,15 @@ public static class VirtualKeys
             new("Oem7", 0xDE, "OEM 7"),
             new("Oem8", 0xDF, "OEM 8"),
             new("Oem102", 0xE2, "OEM <>"),
+            // Modificateurs d'un côté précis, utilisables comme touches à part entière (ex. « Ctrl droit » seul)
+            new("LeftCtrl", VK_LCONTROL, "Ctrl gauche"),
+            new("RightCtrl", VK_RCONTROL, "Ctrl droit", Extended: true),
+            new("LeftShift", VK_LSHIFT, "Maj gauche"),
+            new("RightShift", VK_RSHIFT, "Maj droite"),
+            new("LeftAlt", VK_LMENU, "Alt gauche"),
+            new("RightAlt", VK_RMENU, "Alt Gr", Extended: true),
+            new("LeftWin", VK_LWIN, "Win gauche", Extended: true),
+            new("RightWin", VK_RWIN, "Win droite", Extended: true),
             // Multimédia et système (ne nécessitent pas de fenêtre cible)
             new("MediaPlayPause", 0xB3, "Lecture/Pause", Extended: true, IsMedia: true),
             new("MediaNext", 0xB0, "Piste suivante", Extended: true, IsMedia: true),

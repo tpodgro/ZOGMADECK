@@ -10,24 +10,49 @@ public enum KeyModifiers
     Win = 8,
 }
 
-/// <summary>Combinaison de touches, ex. « Ctrl+Alt+Space ». Format canonique (anglais) en stockage, libellé français à l'affichage.</summary>
-public readonly record struct KeyChord(KeyModifiers Modifiers, KeyInfo Key)
+/// <summary>
+/// Combinaison de touches, ex. « Ctrl+Alt+Space » ou « Right+Num1 » : des modificateurs puis une ou plusieurs touches,
+/// appuyées dans l'ordre et relâchées dans l'ordre inverse. Format canonique (anglais) en stockage, libellé français à l'affichage.
+/// </summary>
+public readonly struct KeyChord : IEquatable<KeyChord>
 {
-    public bool IsMediaKey => Key.IsMedia && Modifiers == KeyModifiers.None;
+    public const int MaxKeys = 6;
 
-    public override string ToString()
+    private readonly KeyInfo[]? _keys;
+
+    public KeyChord(KeyModifiers modifiers, KeyInfo key) : this(modifiers, [key]) { }
+
+    public KeyChord(KeyModifiers modifiers, IEnumerable<KeyInfo> keys)
     {
-        var parts = ModifierNames(Modifiers, french: false).ToList();
-        parts.Add(Key.Name);
-        return string.Join('+', parts);
+        Modifiers = modifiers;
+        _keys = keys.ToArray();
+        if (_keys.Length == 0) throw new ArgumentException("Au moins une touche est nécessaire.", nameof(keys));
     }
 
-    public string ToDisplayString()
-    {
-        var parts = ModifierNames(Modifiers, french: true).ToList();
-        parts.Add(Key.Display);
-        return string.Join(" + ", parts);
-    }
+    public KeyModifiers Modifiers { get; }
+
+    /// <summary>Touches principales, dans l'ordre d'appui.</summary>
+    public IReadOnlyList<KeyInfo> Keys => _keys ?? [];
+
+    /// <summary>Dernière touche principale (la seule pour une combinaison classique).</summary>
+    public KeyInfo Key => Keys[^1];
+
+    /// <summary>Une seule touche principale : seule forme acceptée par Windows pour un raccourci global.</summary>
+    public bool IsSingleKey => Keys.Count == 1;
+
+    public bool IsMediaKey => Modifiers == KeyModifiers.None && Keys.Count > 0 && Keys.All(k => k.IsMedia);
+
+    public override string ToString() =>
+        string.Join('+', ModifierNames(Modifiers, french: false).Concat(Keys.Select(k => k.Name)));
+
+    public string ToDisplayString() =>
+        string.Join(" + ", ModifierNames(Modifiers, french: true).Concat(Keys.Select(k => k.Display)));
+
+    public bool Equals(KeyChord other) => Modifiers == other.Modifiers && Keys.SequenceEqual(other.Keys);
+    public override bool Equals(object? obj) => obj is KeyChord other && Equals(other);
+    public override int GetHashCode() => HashCode.Combine(Modifiers, ToString());
+    public static bool operator ==(KeyChord a, KeyChord b) => a.Equals(b);
+    public static bool operator !=(KeyChord a, KeyChord b) => !a.Equals(b);
 
     private static IEnumerable<string> ModifierNames(KeyModifiers m, bool french)
     {
@@ -52,7 +77,7 @@ public readonly record struct KeyChord(KeyModifiers Modifiers, KeyInfo Key)
         // « + » seul (touche plus) n'est pas géré : on utilise OemPlus / NumAdd.
         var parts = text.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         var mods = KeyModifiers.None;
-        KeyInfo? key = null;
+        var keys = new List<KeyInfo>();
         foreach (var part in parts)
         {
             var mod = part.ToLowerInvariant() switch
@@ -65,32 +90,38 @@ public readonly record struct KeyChord(KeyModifiers Modifiers, KeyInfo Key)
             };
             if (mod != KeyModifiers.None)
             {
-                if (key is not null)
+                if (keys.Count > 0)
                 {
-                    error = $"Le modificateur « {part} » doit précéder la touche.";
+                    error = $"Le modificateur « {part} » doit précéder les touches (ou utilisez « Ctrl gauche », « Maj droite »…).";
                     return false;
                 }
                 mods |= mod;
                 continue;
             }
-            if (key is not null)
-            {
-                error = $"Une seule touche principale est autorisée (« {key.Name} » et « {part} »).";
-                return false;
-            }
-            key = VirtualKeys.FromName(part);
+            var key = VirtualKeys.FromName(part);
             if (key is null)
             {
                 error = $"Touche inconnue : « {part} ».";
                 return false;
             }
+            if (keys.Contains(key))
+            {
+                error = $"La touche « {key.Display} » apparaît deux fois.";
+                return false;
+            }
+            keys.Add(key);
         }
-        if (key is null)
+        if (keys.Count == 0)
         {
             error = "Il manque la touche principale (ex. Ctrl+Alt+Espace).";
             return false;
         }
-        chord = new KeyChord(mods, key);
+        if (keys.Count > MaxKeys)
+        {
+            error = $"Au plus {MaxKeys} touches en plus des modificateurs.";
+            return false;
+        }
+        chord = new KeyChord(mods, keys);
         error = "";
         return true;
     }
