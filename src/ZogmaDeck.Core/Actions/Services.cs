@@ -84,6 +84,7 @@ public sealed class ActionContext
     public required IFocusService Focus { get; init; }
     public IDelayService Delay { get; init; } = new TaskDelayService();
     public IScriptService Scripts { get; init; } = new ProcessScriptService();
+    public IGameService Games { get; init; } = UnavailableGameService.Instance;
     /// <summary>Le panneau doit-il être masqué après cette exécution ? (permet de le masquer avant une saisie clavier)</summary>
     public bool HidePanelAfterRun { get; init; }
     /// <summary>Dossier de données, pour résoudre les chemins relatifs (assets/…).</summary>

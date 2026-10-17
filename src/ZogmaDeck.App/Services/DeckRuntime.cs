@@ -46,6 +46,7 @@ public sealed class DeckRuntime : IProfileNavigator
         Hotkey = hotkey;
         Startup = startup;
         Theme = theme;
+        Games = new GameService(shell);
         _saveTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(700), DispatcherPriority.Background, (_, _) => SaveNow(), Dispatcher.CurrentDispatcher);
         _saveTimer.Stop();
     }
@@ -62,6 +63,7 @@ public sealed class DeckRuntime : IProfileNavigator
     public HotkeyService Hotkey { get; }
     public StartupService Startup { get; }
     public ThemeService Theme { get; }
+    public GameService Games { get; }
     public IPanelHost? Panel { get; set; }
     public TrayIcon? Tray { get; set; }
 
@@ -185,6 +187,7 @@ public sealed class DeckRuntime : IProfileNavigator
         Obs = Obs,
         Profiles = this,
         Focus = Focus,
+        Games = Games,
         HidePanelAfterRun = hidePanel,
         DataDirectory = Paths.DataDirectory,
     };

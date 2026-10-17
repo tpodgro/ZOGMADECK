@@ -178,6 +178,7 @@ public abstract class FieldViewModel : ObservableObject
             FieldKind.ObsScene or FieldKind.ObsInput => new ObsListFieldViewModel(owner, p, f, kind == FieldKind.ObsScene),
             FieldKind.Sound => new SoundFieldViewModel(owner, p, f),
             FieldKind.Time => new TimeFieldViewModel(owner, p, f),
+            FieldKind.Game => new GameFieldViewModel(owner, p, f),
             _ => new TextFieldViewModel(owner, p, f, kind),
         };
     }
@@ -594,5 +595,72 @@ public sealed class TimeFieldViewModel : FieldViewModel
     {
         get => _error;
         private set => Set(ref _error, value);
+    }
+}
+
+/// <summary>Jeu à lancer : liste des jeux détectés pour la plateforme choisie, ou identifiant saisi.</summary>
+public sealed class GameFieldViewModel : FieldViewModel
+{
+    private GamePlatform? _loadedFor;
+    private string? _status;
+
+    public GameFieldViewModel(StepViewModel owner, PropertyInfo p, FieldAttribute f) : base(owner, p, f)
+    {
+        RefreshCommand = new RelayCommand(() => Load(force: true));
+        Load(force: true);
+    }
+
+    public ObservableCollection<InstalledGame> Games { get; } = [];
+    public ICommand RefreshCommand { get; }
+
+    private GamePlatform Platform =>
+        Attribute.DependsOn is { } dep && Owner.Model.GetType().GetProperty(dep)?.GetValue(Owner.Model) is GamePlatform gp ? gp : GamePlatform.Steam;
+
+    public string Text
+    {
+        get => Value as string ?? "";
+        set
+        {
+            Value = (value ?? "").Trim();
+            if (Owner.Model is LaunchGameAction l) l.GameName = Games.FirstOrDefault(g => g.Id == l.GameId)?.Name;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Selected));
+        }
+    }
+
+    public InstalledGame? Selected
+    {
+        get => Games.FirstOrDefault(g => string.Equals(g.Id, Text, StringComparison.OrdinalIgnoreCase));
+        set
+        {
+            if (value is null) return;
+            Text = value.Id;
+        }
+    }
+
+    public string? Status
+    {
+        get => _status;
+        private set => Set(ref _status, value);
+    }
+
+    /// <summary>Recharge la liste quand la plateforme change (appelée après chaque modification de l'étape).</summary>
+    public override void RefreshWarning() => Load(force: false);
+
+    private void Load(bool force)
+    {
+        var platform = Platform;
+        if (!force && _loadedFor == platform) return;
+        var changedPlatform = _loadedFor is not null && _loadedFor != platform;
+        _loadedFor = platform;
+        Games.Clear();
+        foreach (var g in Owner.Runtime.Games.GetInstalledGames(platform)) Games.Add(g);
+        Status = platform == GamePlatform.BattleNet
+            ? "Codes des jeux Battle.net courants ; un autre code peut être saisi."
+            : Games.Count == 0
+                ? $"Aucun jeu {EnumLabels.Get(platform)} détecté sur ce poste : saisissez l'identifiant."
+                : $"{Games.Count} jeu(x) {EnumLabels.Get(platform)} détecté(s).";
+        if (changedPlatform && Games.All(g => g.Id != Text)) Text = "";
+        OnPropertyChanged(nameof(Selected));
     }
 }

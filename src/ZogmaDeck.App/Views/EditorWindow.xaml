@@ -207,6 +207,23 @@
             </StackPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:GameFieldViewModel}">
+            <StackPanel Margin="0,0,0,14" Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding Label}" Style="{StaticResource Pd.Label}" />
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Margin="6,0,0,0" Command="{Binding RefreshCommand}" ToolTip="Rechercher à nouveau les jeux installés">
+                        <TextBlock Style="{StaticResource Pd.Glyph}" Text="&#xE72C;" FontSize="13" />
+                    </Button>
+                    <ComboBox ItemsSource="{Binding Games}" SelectedItem="{Binding Selected}" DisplayMemberPath="Display"
+                              MaxDropDownHeight="360" AutomationProperties.Name="Jeux installés" />
+                </DockPanel>
+                <TextBlock Style="{StaticResource Pd.HintAuto}" Text="{Binding Status}" />
+                <TextBlock Text="Identifiant du jeu" Style="{StaticResource Pd.Label}" Margin="0,8,0,4" />
+                <TextBox Text="{Binding Text, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="Identifiant du jeu" />
+                <TextBlock Style="{StaticResource Pd.HintAuto}" Text="{Binding Hint}" />
+            </StackPanel>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:TimeFieldViewModel}">
             <StackPanel Margin="0,0,0,14" Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="{Binding Label}" Style="{StaticResource Pd.Label}" />
