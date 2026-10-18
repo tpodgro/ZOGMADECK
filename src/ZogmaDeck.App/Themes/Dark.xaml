@@ -23,4 +23,5 @@
     <SolidColorBrush x:Key="Pd.AddTile" Color="#E6262626" />
     <SolidColorBrush x:Key="Pd.ChipBackground" Color="#E6222222" />
     <SolidColorBrush x:Key="Pd.ChipBorder" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="Pd.TileBackdrop" Color="#00000000" />
 </ResourceDictionary>

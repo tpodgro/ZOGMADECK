@@ -22,6 +22,11 @@ public static class ConfigValidator
             s.Hotkey = AppSettings.DefaultHotkey;
         }
         if (!Enum.IsDefined(s.Theme)) s.Theme = ThemePreference.System;
+        if (s.EditorBackground is not null && !IsValidColor(s.EditorBackground))
+        {
+            w.Add($"Couleur de fond de l'éditeur invalide ({s.EditorBackground}) : retour au fond du thème.");
+            s.EditorBackground = null;
+        }
         if (s.AccentColor is not null && !IsValidColor(s.AccentColor))
         {
             w.Add($"Couleur principale invalide ({s.AccentColor}) : retour à la couleur de Windows.");

@@ -99,6 +99,7 @@ public partial class App : Application
         _messages = new MessageWindow();
         var theme = new ThemeService(_messages);
         theme.ApplyAccent(config.Settings.AccentColor);
+        theme.ApplyBackground(config.Settings.EditorBackground, apply: false);
         theme.Apply(config.Settings.Theme);
         _hotkey = new HotkeyService(_messages);
         _focus = new FocusService();

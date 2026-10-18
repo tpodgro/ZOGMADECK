@@ -287,3 +287,36 @@ public class UpdateTests
         Assert.Equal(UpdateService.ReleasesPage, u!.Url);
     }
 }
+
+public class EditorColorTests
+{
+    [Theory]
+    [InlineData("#1B2430", true)]
+    [InlineData("#202020", true)]
+    [InlineData("#EEF2F8", false)]
+    [InlineData("#FFFFFF", false)]
+    public void Background_DecidesLightOrDarkText(string hex, bool dark) =>
+        Assert.Equal(dark, ThemeService.IsDarkBackground(ColorHelper.Parse(hex, Colors.Red)));
+
+    [Fact]
+    public void SurfaceShades_StayCloseToBackground_WithVisibleBorders()
+    {
+        static double L(Color c) => (0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B) / 255;
+        var dark = ThemeService.SurfaceShades(Color.FromRgb(0x1B, 0x24, 0x30), dark: true);
+        Assert.Equal(Color.FromRgb(0x1B, 0x24, 0x30), dark[0]);
+        Assert.True(L(dark[2]) > L(dark[0]) && L(dark[2]) - L(dark[0]) < 0.1); // cartes un peu plus claires
+        Assert.True(L(dark[5]) > L(dark[4]) && L(dark[4]) > L(dark[2]));        // bordures plus marquées
+
+        var light = ThemeService.SurfaceShades(Color.FromRgb(0xEE, 0xF2, 0xF8), dark: false);
+        Assert.True(L(light[2]) >= L(light[0]));                                // cartes plus claires que le fond
+        Assert.True(L(light[5]) < L(light[4]) && L(light[4]) < L(light[0]));    // bordures plus foncées
+    }
+
+    [Fact]
+    public void InvalidEditorBackground_IsReset()
+    {
+        var config = new Core.Model.DeckConfig { Settings = { EditorBackground = "bleu" }, Profiles = [new Core.Model.Profile()] };
+        Core.Storage.ConfigValidator.Normalize(config);
+        Assert.Null(config.Settings.EditorBackground);
+    }
+}

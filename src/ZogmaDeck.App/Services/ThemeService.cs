@@ -39,17 +39,35 @@ public sealed class ThemeService
 
     public event EventHandler? Changed;
 
-    public void Apply(ThemePreference preference)
+    /// <summary>Surfaces de l'éditeur dérivées de la couleur de fond choisie.</summary>
+    private static readonly string[] SurfaceKeys = ["Pd.WindowBackground", "Pd.PanelBackground", "Pd.Surface", "Pd.SurfaceAlt", "Pd.Border", "Pd.BorderStrong"];
+
+    /// <summary>Couleur de fond choisie pour l'éditeur (#RRGGBB), ou null pour celle du thème.</summary>
+    public string? Background { get; private set; }
+
+    /// <summary>Change la couleur de fond (null : fond du thème) ; <paramref name="apply"/> = false pour la préparer avant le premier Apply.</summary>
+    public void ApplyBackground(string? hex, bool apply = true)
+    {
+        Background = ConfigValidator.IsValidColor(hex) && hex!.Length == 7 ? hex : null;
+        if (apply) Apply(Preference, force: true);
+    }
+
+    /// <summary>Un fond choisi impose le thème : texte clair sur fond foncé, foncé sur fond clair.</summary>
+    internal static bool IsDarkBackground(Color c) => ColorHelper.ContrastingForeground(c) == Colors.White;
+
+    public void Apply(ThemePreference preference, bool force = false)
     {
         Preference = preference;
-        var dark = preference switch
-        {
-            ThemePreference.Dark => true,
-            ThemePreference.Light => false,
-            _ => SystemUsesDarkTheme(),
-        };
+        var dark = Background is { } bg
+            ? IsDarkBackground(ColorHelper.Parse(bg, Colors.Black))
+            : preference switch
+            {
+                ThemePreference.Dark => true,
+                ThemePreference.Light => false,
+                _ => SystemUsesDarkTheme(),
+            };
         var app = Application.Current;
-        if (_tokens is not null && dark == IsDark && app.ThemeMode != ThemeMode.None) return;
+        if (!force && _tokens is not null && dark == IsDark && app.ThemeMode != ThemeMode.None) return;
         IsDark = dark;
 
         app.ThemeMode = dark ? ThemeMode.Dark : ThemeMode.Light;
@@ -61,6 +79,7 @@ public sealed class ThemeService
         app.Resources.MergedDictionaries.Add(tokens);
         _tokens = tokens;
 
+        ApplySurfaces(app);
         foreach (Window w in app.Windows) ApplyChrome(w);
         ApplyAccent(Accent);
         Changed?.Invoke(this, EventArgs.Empty);
@@ -169,10 +188,34 @@ public sealed class ThemeService
         var hwnd = new WindowInteropHelper(w).Handle;
         if (hwnd == IntPtr.Zero)
         {
-            w.SourceInitialized += (_, _) => Win32.ApplyWindowChrome(new WindowInteropHelper(w).Handle, IsDark);
+            w.SourceInitialized += (_, _) => Win32.ApplyWindowChrome(new WindowInteropHelper(w).Handle, IsDark, CaptionColor);
             return;
         }
-        Win32.ApplyWindowChrome(hwnd, IsDark);
+        Win32.ApplyWindowChrome(hwnd, IsDark, CaptionColor);
+    }
+
+    private (byte, byte, byte)? CaptionColor => Background is { } bg && ColorHelper.Parse(bg, Colors.Black) is var c ? (c.R, c.G, c.B) : null;
+
+    /// <summary>Fond, cartes et bordures de l'éditeur à partir de la couleur choisie (ou ceux du thème).</summary>
+    private void ApplySurfaces(Application app)
+    {
+        if (Background is null)
+        {
+            foreach (var k in SurfaceKeys) app.Resources.Remove(k);
+            return;
+        }
+        var shades = SurfaceShades(ColorHelper.Parse(Background, Colors.Black), IsDark);
+        for (var i = 0; i < SurfaceKeys.Length; i++) app.Resources[SurfaceKeys[i]] = ColorHelper.Brush(shades[i]);
+    }
+
+    /// <summary>Fond de fenêtre, panneau, carte, zone secondaire, bordure, bordure marquée.</summary>
+    internal static Color[] SurfaceShades(Color bg, bool dark)
+    {
+        static Color Mix(Color a, Color b, double t) => Color.FromRgb(
+            (byte)Math.Round(a.R + (b.R - a.R) * t), (byte)Math.Round(a.G + (b.G - a.G) * t), (byte)Math.Round(a.B + (b.B - a.B) * t));
+        return dark
+            ? [bg, Mix(bg, Colors.White, 0.03), Mix(bg, Colors.White, 0.06), Mix(bg, Colors.White, 0.02), Mix(bg, Colors.White, 0.12), Mix(bg, Colors.White, 0.22)]
+            : [bg, Mix(bg, Colors.White, 0.4), Mix(bg, Colors.White, 0.75), Mix(bg, Colors.White, 0.5), Mix(bg, Colors.Black, 0.1), Mix(bg, Colors.Black, 0.2)];
     }
 
     public static bool SystemUsesDarkTheme()

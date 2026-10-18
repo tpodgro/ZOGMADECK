@@ -9,7 +9,7 @@ Discord, attendre, changer de profil.
 
 - Guide utilisateur : [docs/GUIDE-UTILISATEUR.md](docs/GUIDE-UTILISATEUR.md)
 - Panneau en verre dépoli par défaut (voile blanc à 20 % + flou de l'arrière-plan, boutons translucides à pastille colorée), déplaçable, redimensionnable librement (les boutons se répartissent dans la place disponible), apparence personnalisable.
-- Plus de 3 000 icônes : symboles Segoe Fluent Icons, emoji Windows (recherche en français), logos d'applications, icône extraite d'un programme installé, ou texte court (S1, REC…). Sélecteur de couleur libre, couleur principale de l'interface personnalisable.
+- Plus de 3 000 icônes : symboles Segoe Fluent Icons, emoji Windows (recherche en français), logos d'applications, icône extraite d'un programme installé, ou texte court (S1, REC…). Sélecteur de couleur libre ; couleurs de l'éditeur personnalisables (fond, couleur principale, thème).
 - Mises à jour : signalées dans le menu de l'icône (Microsoft Store, ou releases GitHub pour l'installateur).
 - Aucun compte, aucune télémétrie, aucun service en ligne. Aucun droit administrateur. Connexions réseau : voir [docs/PRIVACY.md](docs/PRIVACY.md).
 - Anciennement **PocketDeck** : au premier lancement, ZogmaDeck reprend automatiquement les données de `%APPDATA%\PocketDeck` (configuration, sauvegardes, images, mot de passe OBS chiffré ; pas les journaux), remplace l'ancienne entrée de démarrage avec Windows, et sait importer les anciens fichiers `.pocketdeck`.

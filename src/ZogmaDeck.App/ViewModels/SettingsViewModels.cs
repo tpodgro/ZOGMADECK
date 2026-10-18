@@ -45,9 +45,61 @@ public sealed class SettingsViewModel : ObservableObject
         });
         if (_rt.Updates is { } updates) updates.Checked += (_, _) => RefreshUpdate();
         _accentText = S.AccentColor ?? "#2F6FDB";
+        _backgroundText = S.EditorBackground ?? (_rt.Theme.IsDark ? "#202020" : "#F3F3F3");
+        SetBackgroundCommand = new RelayCommand(p => { if (p is string hex) BackgroundText = hex; });
     }
 
     private string _accentText;
+    private string _backgroundText;
+    public ICommand SetBackgroundCommand { get; }
+
+    /// <summary>Fonds proposés : sombres puis clairs (le texte s'adapte automatiquement).</summary>
+    public static IReadOnlyList<string> BackgroundPalette { get; } =
+    [
+        "#202020", "#1A1C23", "#161B26", "#1B2430", "#1E2A24", "#241E2E", "#2B1F1F", "#2A2418",
+        "#F3F3F3", "#EEF2F8", "#EAF4EE", "#F4EFE6", "#F5ECF4", "#FFFFFF",
+    ];
+
+    public bool UseThemeBackground
+    {
+        get => S.EditorBackground is null;
+        set
+        {
+            if (value == UseThemeBackground) return;
+            ApplyBackground(value ? null : BackgroundText);
+        }
+    }
+
+    public bool UseCustomBackground
+    {
+        get => !UseThemeBackground;
+        set => UseThemeBackground = !value;
+    }
+
+    /// <summary>Le choix clair/sombre n'a d'effet qu'avec le fond du thème.</summary>
+    public bool CanChooseTheme => UseThemeBackground;
+
+    public string BackgroundText
+    {
+        get => _backgroundText;
+        set
+        {
+            if (!Set(ref _backgroundText, value)) return;
+            var v = (value ?? "").Trim();
+            if (!v.StartsWith('#')) v = "#" + v;
+            if (v.Length == 7 && ConfigValidator.IsValidColor(v)) ApplyBackground(v.ToUpperInvariant());
+        }
+    }
+
+    private void ApplyBackground(string? hex)
+    {
+        S.EditorBackground = hex;
+        _rt.Theme.ApplyBackground(hex);
+        OnPropertyChanged(nameof(UseThemeBackground));
+        OnPropertyChanged(nameof(UseCustomBackground));
+        OnPropertyChanged(nameof(CanChooseTheme));
+        _rt.NotifySettingsChanged();
+    }
     private string? _updateStatus;
 
     public ICommand CheckUpdatesNowCommand { get; }
@@ -136,7 +188,7 @@ public sealed class SettingsViewModel : ObservableObject
                  {
                      nameof(Hotkey), nameof(HotkeyDisplay), nameof(SelectedTheme), nameof(AlwaysOnTop), nameof(HideAfterAction),
                      nameof(HideOnDeactivate), nameof(StartWithWindows), nameof(HardwareAcceleration),
-                     nameof(UseWindowsAccent), nameof(UseCustomAccent),
+                     nameof(UseWindowsAccent), nameof(UseCustomAccent), nameof(UseThemeBackground), nameof(UseCustomBackground), nameof(CanChooseTheme),
                  })
             OnPropertyChanged(p);
         if (S.AccentColor is { } accent && accent != _accentText)
@@ -672,7 +724,8 @@ public sealed class BackupViewModel : ObservableObject
             }
         }
         _rt.Theme.ApplyAccent(s.AccentColor);
-        if (s.Theme != oldTheme) _rt.Theme.Apply(s.Theme);
+        _rt.Theme.ApplyBackground(s.EditorBackground, apply: false);
+        _rt.Theme.Apply(s.Theme, force: true);
     }
 
     private void RestoreSnapshot(SnapshotItem s)

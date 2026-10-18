@@ -41,6 +41,8 @@ public sealed class AppSettings
     public bool CheckForUpdates { get; set; } = true;
     /// <summary>Couleur principale de l'interface (#RRGGBB) ; null = couleur d'accentuation de Windows.</summary>
     public string? AccentColor { get; set; }
+    /// <summary>Couleur de fond de l'éditeur (#RRGGBB) ; null = fond du thème. Le thème clair/sombre suit alors cette couleur.</summary>
+    public string? EditorBackground { get; set; }
     public ObsSettings Obs { get; set; } = new();
     public DiscordSettings Discord { get; set; } = new();
     public PanelAppearance Panel { get; set; } = new();

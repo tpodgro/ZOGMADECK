@@ -20,6 +20,8 @@
         <!-- Aperçu d'une tuile (non cliquable) -->
         <DataTemplate x:Key="TilePreview" DataType="{x:Type vm:PanelButtonViewModel}">
             <Grid Width="{Binding Size}" Height="{Binding Size}">
+                <!-- Fond foncé derrière la tuile en thème clair : le style verre (libellé blanc) est conçu pour le panneau -->
+                <Border CornerRadius="{Binding CornerRadius}" Background="{DynamicResource Pd.TileBackdrop}" />
                 <Border CornerRadius="{Binding CornerRadius}" Background="{Binding TileBackground}" BorderBrush="{Binding TileBorder}" BorderThickness="1" />
                 <Border CornerRadius="{Binding CornerRadius}" Background="{Binding Sheen}" />
                 <Grid Margin="6" TextElement.Foreground="{Binding LabelForeground}">
@@ -661,32 +663,8 @@
                                 <CheckBox Margin="0,8,0,0" Content="Masquer le panneau quand une autre fenêtre est activée" IsChecked="{Binding HideOnDeactivate}" />
                                 <CheckBox Margin="0,8,0,0" Content="Utiliser l'accélération graphique (GPU) — au prochain démarrage" IsChecked="{Binding HardwareAcceleration}" />
                                 <TextBlock Style="{StaticResource Pd.Hint}" Text="Désactivée par défaut : le rendu logiciel suffit pour ZogmaDeck et évite des fenêtres vides sur certaines configurations." />
-                                <TextBlock Style="{StaticResource Pd.Label}" Margin="0,14,0,4" Text="Thème" />
-                                <ComboBox Width="240" HorizontalAlignment="Left" ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme}"
-                                          DisplayMemberPath="Label" AutomationProperties.Name="Thème" />
-                                <TextBlock Style="{StaticResource Pd.Label}" Margin="0,14,0,4" Text="Couleur principale (cases, curseurs, boutons d'action…)" />
-                                <RadioButton Content="Couleur d'accentuation de Windows" IsChecked="{Binding UseWindowsAccent}" GroupName="Accent" />
-                                <RadioButton Content="Couleur personnalisée" IsChecked="{Binding UseCustomAccent}" GroupName="Accent" Margin="0,4,0,0" />
-                                <StackPanel Margin="28,6,0,0" Visibility="{Binding UseCustomAccent, Converter={StaticResource BoolToVis}}">
-                                    <ItemsControl ItemsSource="{x:Static vm:SettingsViewModel.AccentPalette}" Focusable="False">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Button Style="{StaticResource Pd.Swatch}" Background="{Binding}" ToolTip="{Binding}" AutomationProperties.Name="{Binding}"
-                                                        Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                        CommandParameter="{Binding}" />
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                        <TextBox Width="120" Text="{Binding AccentText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Couleur principale" />
-                                        <ctl:ColorPicker Margin="8,0,0,0" Color="{Binding AccentText, UpdateSourceTrigger=PropertyChanged}" />
-                                    </StackPanel>
-                                </StackPanel>
+                                <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,10,0,0"
+                                           Text="Thème clair ou sombre, couleur de fond et couleur principale : onglet Apparence › Couleurs de l'éditeur." />
                             </StackPanel>
                         </Border>
 
@@ -747,6 +725,68 @@
             <TabItem Header="Apparence">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Appearance}">
                     <StackPanel Margin="4,12,4,12" MaxWidth="760" HorizontalAlignment="Left" MinWidth="560">
+                        <Border Style="{StaticResource Pd.Card}" Margin="0,0,0,12"
+                                DataContext="{Binding DataContext.Settings, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <StackPanel>
+                                <TextBlock Text="Couleurs de l'éditeur" Style="{StaticResource Pd.Section}" />
+                                <TextBlock Style="{StaticResource Pd.Hint}" Margin="0,0,0,10"
+                                           Text="Fond, cartes et couleur principale des fenêtres de ZogmaDeck (éditeur, menus). Le panneau de boutons garde son apparence ci-dessous." />
+                                <TextBlock Style="{StaticResource Pd.Label}" Margin="0,0,0,4" Text="Thème" />
+                                <ComboBox Width="240" HorizontalAlignment="Left" ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme}" IsEnabled="{Binding CanChooseTheme}"
+                                          DisplayMemberPath="Label" AutomationProperties.Name="Thème" />
+                                <TextBlock Style="{StaticResource Pd.Hint}" Text="Avec une couleur de fond personnalisée, le thème clair ou sombre suit cette couleur."
+                                           Visibility="{Binding UseCustomBackground, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Style="{StaticResource Pd.Label}" Margin="0,14,0,4" Text="Couleur principale (cases, curseurs, boutons d'action…)" />
+                                <RadioButton Content="Couleur d'accentuation de Windows" IsChecked="{Binding UseWindowsAccent}" GroupName="Accent" />
+                                <RadioButton Content="Couleur personnalisée" IsChecked="{Binding UseCustomAccent}" GroupName="Accent" Margin="0,4,0,0" />
+                                <StackPanel Margin="28,6,0,0" Visibility="{Binding UseCustomAccent, Converter={StaticResource BoolToVis}}">
+                                    <ItemsControl ItemsSource="{x:Static vm:SettingsViewModel.AccentPalette}" Focusable="False">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource Pd.Swatch}" Background="{Binding}" ToolTip="{Binding}" AutomationProperties.Name="{Binding}"
+                                                        Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <TextBox Width="120" Text="{Binding AccentText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Couleur principale" />
+                                        <ctl:ColorPicker Margin="8,0,0,0" Color="{Binding AccentText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource Pd.Label}" Margin="0,14,0,4" Text="Couleur de fond" />
+                                <RadioButton Content="Fond du thème (clair ou sombre)" IsChecked="{Binding UseThemeBackground}" GroupName="EditorBackground" />
+                                <RadioButton Content="Couleur personnalisée" IsChecked="{Binding UseCustomBackground}" GroupName="EditorBackground" Margin="0,4,0,0" />
+                                <StackPanel Margin="28,6,0,0" Visibility="{Binding UseCustomBackground, Converter={StaticResource BoolToVis}}">
+                                    <ItemsControl ItemsSource="{x:Static vm:SettingsViewModel.BackgroundPalette}" Focusable="False">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource Pd.Swatch}" Background="{Binding}" ToolTip="{Binding}" AutomationProperties.Name="{Binding}"
+                                                        BorderBrush="{DynamicResource Pd.BorderStrong}"
+                                                        Command="{Binding DataContext.SetBackgroundCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <TextBox Width="120" Text="{Binding BackgroundText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Couleur de fond de l'éditeur" />
+                                        <ctl:ColorPicker Margin="8,0,0,0" Color="{Binding BackgroundText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <TextBlock Style="{StaticResource Pd.Hint}" Text="Le texte passe automatiquement en clair sur un fond foncé, et en foncé sur un fond clair." />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                         <Border Style="{StaticResource Pd.Card}">
                             <StackPanel>
                                 <DockPanel>

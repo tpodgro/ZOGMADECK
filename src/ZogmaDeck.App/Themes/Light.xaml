@@ -24,4 +24,5 @@
     <!-- Fond des éléments du panneau (profils, état), lisible même quand le fond du panneau est transparent -->
     <SolidColorBrush x:Key="Pd.ChipBackground" Color="#E6F7F7F7" />
     <SolidColorBrush x:Key="Pd.ChipBorder" Color="#1F000000" />
+    <SolidColorBrush x:Key="Pd.TileBackdrop" Color="#FF4A5260" />
 </ResourceDictionary>

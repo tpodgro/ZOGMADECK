@@ -326,11 +326,17 @@ internal static class Win32
         DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref none, sizeof(int));
     }
 
-    public static void ApplyWindowChrome(IntPtr hwnd, bool dark)
+    private const int DWMWA_CAPTION_COLOR = 35;
+    private const int DWMWA_COLOR_DEFAULT = unchecked((int)0xFFFFFFFF);
+
+    /// <summary>Barre de titre claire ou sombre, coins arrondis ; <paramref name="captionRgb"/> colore la barre de titre (Windows 11).</summary>
+    public static void ApplyWindowChrome(IntPtr hwnd, bool dark, (byte R, byte G, byte B)? captionRgb = null)
     {
         if (hwnd == IntPtr.Zero) return;
         var v = dark ? 1 : 0;
         DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref v, sizeof(int));
+        var caption = captionRgb is { } c ? c.R | (c.G << 8) | (c.B << 16) : DWMWA_COLOR_DEFAULT; // COLORREF 0x00BBGGRR
+        DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ref caption, sizeof(int));
         var corner = DWMWCP_ROUND;
         DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref corner, sizeof(int));
     }
