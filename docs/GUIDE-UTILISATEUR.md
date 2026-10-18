@@ -27,7 +27,7 @@ clic droit sur l'icône de notification › **Quitter ZogmaDeck**.
 | Action | Comment |
 |---|---|
 | Exécuter un bouton | Clic, ou touche **1** à **9**, ou flèches puis **Entrée** |
-| Annuler une séquence en cours | Recliquer sur le bouton (une barre animée indique l'exécution) |
+| Annuler une séquence en cours | Recliquer sur le bouton (son infobulle indique l'étape en cours) |
 | Changer de profil | Cliquer sur un des traits en haut du panneau (le nom du profil s'affiche au survol), **Ctrl + Tab**, ou **Ctrl + 1…9** |
 | Modifier un bouton | Clic droit › **Modifier ce bouton…** |
 | Ouvrir l'éditeur | Icône de notification › **Éditeur…**, **Ctrl + E**, ou clic droit sur le fond du panneau |

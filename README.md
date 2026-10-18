@@ -20,7 +20,7 @@ Discord, attendre, changer de profil.
 |---|---|
 | **C# / .NET 10 (LTS, support jusqu'en nov. 2028)** | .NET 8 sort du support le 10/11/2026 ; .NET 11 n'est qu'en préversion (vérifié sur `releases-index.json` officiel). |
 | **WPF + thème Fluent natif** (`ThemeMode`) | Interface native Windows 11 (clair/sombre) sans navigateur embarqué. `ThemeMode` est encore marqué expérimental (WPF0001) dans .NET 10. |
-| **Aucun paquet NuGet dans l'application** | Win32 par P/Invoke (`RegisterHotKey`, `SendInput`, `Shell_NotifyIcon`, DPAPI), OBS en `ClientWebSocket` + `System.Text.Json`, audio par `MediaPlayer` (Media Foundation). |
+| **Aucun paquet NuGet dans l'application** | Win32 par P/Invoke (`RegisterHotKey`, `SendInput`, `Shell_NotifyIcon`, DPAPI), OBS en `ClientWebSocket` + `System.Text.Json`, audio décodé par Media Foundation (piste audio seule) et joué par waveOut, volume appliqué aux échantillons (exact dès le début, réglable en direct ; `MediaPlayer` de WPF jouait à plein volume pendant plusieurs secondes les MP3 contenant une pochette). |
 | **Rendu logiciel par défaut** | Sur le poste de développement, le rendu Direct3D de WPF affichait des fenêtres vides, y compris pour une application WPF minimale générée par `dotnet new wpf`. Le rendu logiciel suffit pour cette interface. L'option « Utiliser l'accélération graphique » existe dans les Réglages. |
 | **Tests xUnit v3 sur Microsoft.Testing.Platform** | Mode de test natif du SDK .NET 10 (`global.json` → `"test": { "runner": "Microsoft.Testing.Platform" }`). |
 

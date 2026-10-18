@@ -1,27 +1,19 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Threading;
 using ZogmaDeck.Core.Actions;
 using ZogmaDeck.Core.Diagnostics;
 
 namespace ZogmaDeck.Services;
 
 /// <summary>
-/// Lecture audio via MediaPlayer (Media Foundation de Windows), sans dépendance externe. Gère les extraits (début/fin)
-/// et le comportement au nouvel appui (rejouer, arrêter, superposer) par source.
+/// Lecture des sons (Media Foundation + waveOut, voir <see cref="MediaFoundationAudio"/>) : extraits (début/fin),
+/// volume exact dès le début et modifiable en direct, comportement au nouvel appui (rejouer, arrêter, superposer) par source.
 /// </summary>
 public sealed class AudioService : IAudioService
 {
     private static readonly TimeSpan OpenTimeout = TimeSpan.FromSeconds(10);
-    private readonly List<Playback> _active = [];
+    private readonly List<Entry> _active = [];
 
-    private sealed class Playback(MediaPlayer player, object? owner)
-    {
-        public MediaPlayer Player { get; } = player;
-        public object? Owner { get; } = owner;
-        public DispatcherTimer? EndTimer { get; set; }
-        public TaskCompletionSource Ended { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    }
+    private sealed record Entry(MediaFoundationAudio.Playback Playback, object? Owner);
 
     public int ActiveCount => _active.Count;
 
@@ -42,102 +34,55 @@ public sealed class AudioService : IAudioService
             if (running.Count > 0 && request.Repeat == SoundRepeatMode.Stop) return;
         }
 
-        var name = Path.GetFileName(path);
-        var player = new MediaPlayer { Volume = Math.Clamp(request.Volume, 0, 1) };
-        var playback = new Playback(player, request.Owner);
-        var opened = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        player.MediaOpened += (_, _) => opened.TrySetResult();
-        player.MediaFailed += (_, e) =>
-        {
-            var ex = new ActionException($"Lecture impossible de « {name} » : {e.ErrorException?.Message ?? "format non pris en charge"}");
-            opened.TrySetException(ex);
-            playback.Ended.TrySetException(ex);
-            Release(playback);
-        };
-        player.MediaEnded += (_, _) => Release(playback);
-
-        _active.Add(playback);
-        player.Open(new Uri(Path.GetFullPath(path)));
+        var playback = new MediaFoundationAudio.Playback(Path.GetFullPath(path), request.Volume, request.Start, request.End);
+        var entry = new Entry(playback, request.Owner);
+        _active.Add(entry);
+        _ = RemoveWhenEndedAsync(entry);
 
         try
         {
-            await opened.Task.WaitAsync(OpenTimeout, ct);
+            await playback.Started.WaitAsync(OpenTimeout, ct);
         }
         catch (TimeoutException)
         {
-            Release(playback);
-            throw new ActionException($"Le fichier « {name} » ne s'ouvre pas (format non pris en charge ?).");
+            Release(entry);
+            throw new ActionException($"Le fichier « {Path.GetFileName(path)} » ne s'ouvre pas (format non pris en charge ?).");
         }
-        catch (OperationCanceledException)
+        catch
         {
-            Release(playback);
+            Release(entry);
             throw;
         }
-        if (!_active.Contains(playback)) return; // arrêté pendant l'ouverture
-
-        var duration = player.NaturalDuration.HasTimeSpan ? player.NaturalDuration.TimeSpan : (TimeSpan?)null;
-        if (request.Start > TimeSpan.Zero)
-        {
-            if (duration is { } total && request.Start >= total)
-            {
-                Release(playback);
-                throw new ActionException($"Le début de l'extrait ({TimeFormat.Format(request.Start.TotalSeconds)}) dépasse la durée de « {name} » ({TimeFormat.Format(total.TotalSeconds)}).");
-            }
-            player.Position = request.Start;
-        }
-        if (request.End is { } end && end > request.Start && (duration is null || end < duration))
-        {
-            // Une seule minuterie, déclenchée à la fin de l'extrait (pas de scrutation de la position).
-            var timer = new DispatcherTimer(DispatcherPriority.Normal) { Interval = end - request.Start };
-            timer.Tick += (_, _) => Release(playback);
-            playback.EndTimer = timer;
-        }
-        player.Play();
-        playback.EndTimer?.Start();
 
         if (!request.WaitForEnd) return;
         try
         {
-            await playback.Ended.Task.WaitAsync(ct);
+            await playback.Ended.WaitAsync(ct);
         }
         catch (OperationCanceledException)
         {
-            Release(playback);
+            Release(entry);
             throw;
         }
     }
 
-    /// <summary>Durée d'un fichier audio (null si illisible), pour aider à choisir un extrait.</summary>
-    public static async Task<TimeSpan?> GetDurationAsync(string path)
+    private async Task RemoveWhenEndedAsync(Entry entry)
     {
-        var player = new MediaPlayer { Volume = 0 };
-        var opened = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        player.MediaOpened += (_, _) => opened.TrySetResult(true);
-        player.MediaFailed += (_, _) => opened.TrySetResult(false);
-        try
-        {
-            player.Open(new Uri(Path.GetFullPath(path)));
-            var ok = await opened.Task.WaitAsync(OpenTimeout);
-            return ok && player.NaturalDuration.HasTimeSpan ? player.NaturalDuration.TimeSpan : null;
-        }
-        catch (Exception ex) when (ex is TimeoutException or IOException or UriFormatException or InvalidOperationException)
-        {
-            return null;
-        }
-        finally
-        {
-            player.Close();
-        }
+        try { await entry.Playback.Ended; }
+        catch (ActionException) { /* signalée par PlayAsync */ }
+        _active.Remove(entry);
     }
+
+    /// <summary>Durée d'un fichier audio (null si illisible), pour régler un extrait.</summary>
+    public static Task<TimeSpan?> GetDurationAsync(string path) => Task.Run(() => MediaFoundationAudio.GetDuration(Path.GetFullPath(path)));
 
     /// <summary>Change le volume des sons en cours d'une source (curseur déplacé pendant l'écoute ou la lecture).</summary>
     public void SetVolume(object owner, double volume)
     {
-        foreach (var p in _active.Where(p => ReferenceEquals(p.Owner, owner))) p.Player.Volume = Math.Clamp(volume, 0, 1);
+        foreach (var p in _active.Where(p => ReferenceEquals(p.Owner, owner))) p.Playback.Gain = volume;
     }
 
-    internal double? VolumeOf(object owner) => _active.FirstOrDefault(p => ReferenceEquals(p.Owner, owner))?.Player.Volume;
+    internal double? VolumeOf(object owner) => _active.FirstOrDefault(p => ReferenceEquals(p.Owner, owner))?.Playback.Gain;
 
     public void Stop(object owner)
     {
@@ -150,17 +95,10 @@ public sealed class AudioService : IAudioService
         foreach (var p in _active.ToList()) Release(p);
     }
 
-    private void Release(Playback p)
+    /// <summary>Arrête un son ; une étape qui attendait sa fin continue (l'arrêt termine la lecture).</summary>
+    private void Release(Entry e)
     {
-        if (!_active.Remove(p)) return;
-        p.EndTimer?.Stop();
-        try
-        {
-            p.Player.Stop();
-            p.Player.Close();
-        }
-        catch (InvalidOperationException) { }
-        // Une étape qui attend la fin du son continue quand il est arrêté (nouvel appui, « Arrêter les sons »…).
-        p.Ended.TrySetResult();
+        if (!_active.Remove(e)) return;
+        e.Playback.Stop();
     }
 }
