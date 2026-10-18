@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using ZogmaDeck.Core.Model;
 using ZogmaDeck.Core.Storage;
@@ -81,7 +82,7 @@ public sealed class ThemeService
 
         ApplySurfaces(app);
         foreach (Window w in app.Windows) ApplyChrome(w);
-        ApplyAccent(Accent);
+        SetAccentResources();
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -96,6 +97,14 @@ public sealed class ThemeService
     public void ApplyAccent(string? hex)
     {
         Accent = ConfigValidator.IsValidColor(hex) && hex!.Length == 7 ? hex : null;
+        // Thème déjà affiché : on le réapplique entièrement. Les pinceaux du thème Fluent ne relisent les nuances qu'à
+        // son chargement (vérifié : les réévaluer sur place ne suffit pas pour un changement en direct).
+        if (_tokens is not null) Apply(Preference, force: true);
+        else SetAccentResources();
+    }
+
+    private void SetAccentResources()
+    {
         var app = Application.Current;
         if (app is null) return;
         Color? fill = null;
@@ -116,6 +125,15 @@ public sealed class ThemeService
             fill = IsDark ? shades[2] : shades[4];
         }
 
+        // Les références des pinceaux du thème aux nuances gardent leur valeur en cache : seul un changement des
+        // dictionnaires fusionnés les fait relire. On retire puis remet le dictionnaire des couleurs de ZogmaDeck,
+        // comme lors d'un changement de thème (sinon la nouvelle couleur n'apparaît qu'au changement de thème suivant).
+        RefreshFluentBrushes(app, fill);
+        app.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => RefreshFluentBrushes(app, fill));
+    }
+
+    private static void RefreshFluentBrushes(Application app, Color? fill)
+    {
         var fluent = app.Resources.MergedDictionaries.FirstOrDefault(d =>
             d.Source?.OriginalString.Contains("PresentationFramework.Fluent", StringComparison.OrdinalIgnoreCase) == true);
         if (fluent is null) return;
