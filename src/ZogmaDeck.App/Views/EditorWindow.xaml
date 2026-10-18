@@ -170,21 +170,27 @@
                 <TextBlock Text="Ou un son de la bibliothèque intégrée :" Style="{StaticResource Pd.Label}" Margin="0,10,0,4" />
                 <ComboBox ItemsSource="{Binding Library}" SelectedItem="{Binding SelectedLibrarySound}" DisplayMemberPath="Display"
                           MaxDropDownHeight="360" AutomationProperties.Name="Bibliothèque de sons" />
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button Command="{Binding PreviewCommand}" ToolTip="Écouter avec le volume et l'extrait réglés">
+                <TextBlock Text="Extrait à jouer" Style="{StaticResource Pd.Label}" Margin="0,12,0,0" />
+                <ctl:RangeSlider Minimum="0" Maximum="{Binding Duration}" SmallChange="{Binding Step}" IsEnabled="{Binding HasDuration}"
+                                 LowerValue="{Binding RangeStart, Mode=TwoWay}" UpperValue="{Binding RangeEnd, Mode=TwoWay}"
+                                 RangeCommitted="SoundRange_Committed" AutomationProperties.Name="Extrait à jouer" />
+                <TextBlock Text="{Binding SegmentText}" Foreground="{DynamicResource Pd.TextSecondary}" FontSize="12" TextWrapping="Wrap" />
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Command="{Binding PreviewCommand}" Margin="0,0,6,4" ToolTip="Écouter l'extrait choisi avec le volume réglé" AutomationProperties.Name="Écouter l'extrait">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Style="{StaticResource Pd.Glyph}" Text="&#xE768;" FontSize="13" Margin="0,0,6,0" />
-                            <TextBlock Text="Écouter" />
+                            <TextBlock Text="Écouter l'extrait" />
                         </StackPanel>
                     </Button>
-                    <Button Margin="6,0,0,0" Command="{Binding StopCommand}" ToolTip="Arrêter l'écoute">
+                    <Button Margin="0,0,6,4" Command="{Binding StopCommand}" ToolTip="Arrêter l'écoute" AutomationProperties.Name="Arrêter l'écoute">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Style="{StaticResource Pd.Glyph}" Text="&#xE71A;" FontSize="13" Margin="0,0,6,0" />
                             <TextBlock Text="Arrêter" />
                         </StackPanel>
                     </Button>
-                    <TextBlock Text="{Binding DurationText}" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{DynamicResource Pd.TextSecondary}" />
-                </StackPanel>
+                    <Button Margin="0,0,12,4" Content="Fichier entier" Command="{Binding ResetSegmentCommand}" ToolTip="Jouer le fichier du début à la fin" />
+                    <CheckBox Content="Écouter après chaque réglage" IsChecked="{Binding AutoPreview}" VerticalAlignment="Center" Margin="0,0,0,4" />
+                </WrapPanel>
                 <TextBlock Style="{StaticResource Pd.WarningAuto}" Text="{Binding Warning}" />
                 <WrapPanel Margin="0,8,0,0">
                     <TextBlock Text="Sons gratuits en ligne (vérifiez la licence de chaque son) :" Foreground="{DynamicResource Pd.TextTertiary}" FontSize="12" Margin="0,0,6,0" />

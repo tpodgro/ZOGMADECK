@@ -88,10 +88,10 @@ public sealed class PlaySoundAction : DeckAction
     [Field("Si on appuie à nouveau pendant la lecture", Kind = FieldKind.Choice, Order = 3)]
     public SoundRepeatMode OnRepeat { get; set; } = SoundRepeatMode.Restart;
 
-    [Field("Début de l'extrait", Kind = FieldKind.Time, Order = 4, Hint = "Ex. 1:23.5 (minutes:secondes) ou 83.5 (secondes). Vide = début du fichier.")]
+    /// <summary>Début de l'extrait en secondes (0 = début du fichier). Réglé par le curseur à deux poignées du champ « son ».</summary>
     public double StartSeconds { get; set; }
 
-    [Field("Fin de l'extrait", Kind = FieldKind.Time, Order = 5, Hint = "Vide = jusqu'à la fin du fichier.")]
+    /// <summary>Fin de l'extrait en secondes (0 = fin du fichier).</summary>
     public double EndSeconds { get; set; }
 
     [Field("Attendre la fin du son avant l'étape suivante", Kind = FieldKind.Toggle, Order = 6)]
@@ -113,9 +113,15 @@ public sealed class PlaySoundAction : DeckAction
         if (EndSeconds > 0 && EndSeconds <= StartSeconds) yield return "La fin de l'extrait doit être après son début.";
     }
 
+    /// <summary>
+    /// Volume du curseur (0–100 %) vers le gain appliqué. Échelle progressive (carré) : linéaire, 80 % ne baissait le son
+    /// que de 2 dB et 50 % de 6 dB, presque inaudible ; ici 50 % ≈ −12 dB, ressenti comme environ deux fois moins fort.
+    /// </summary>
+    public static double Gain(int volume) => Math.Pow(Math.Clamp(volume, 0, 100) / 100.0, 2);
+
     public SoundRequest ToRequest(string dataDirectory) => new(
         Storage.ResourcePaths.Resolve(Path, dataDirectory),
-        Math.Clamp(Volume, 0, 100) / 100.0,
+        Gain(Volume),
         WaitForEnd,
         TimeSpan.FromSeconds(Math.Max(0, StartSeconds)),
         EndSeconds > StartSeconds ? TimeSpan.FromSeconds(EndSeconds) : null,

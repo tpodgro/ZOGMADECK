@@ -131,6 +131,14 @@ public sealed class AudioService : IAudioService
         }
     }
 
+    /// <summary>Change le volume des sons en cours d'une source (curseur déplacé pendant l'écoute ou la lecture).</summary>
+    public void SetVolume(object owner, double volume)
+    {
+        foreach (var p in _active.Where(p => ReferenceEquals(p.Owner, owner))) p.Player.Volume = Math.Clamp(volume, 0, 1);
+    }
+
+    internal double? VolumeOf(object owner) => _active.FirstOrDefault(p => ReferenceEquals(p.Owner, owner))?.Player.Volume;
+
     public void Stop(object owner)
     {
         foreach (var p in _active.Where(p => ReferenceEquals(p.Owner, owner)).ToList()) Release(p);

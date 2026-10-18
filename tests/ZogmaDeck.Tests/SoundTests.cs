@@ -44,6 +44,14 @@ public class TimeFormatTests
 
 public class PlaySoundActionTests
 {
+    [Theory]
+    [InlineData(0, 0.0)]
+    [InlineData(50, 0.25)]
+    [InlineData(80, 0.64)]
+    [InlineData(100, 1.0)]
+    [InlineData(150, 1.0)]
+    public void Volume_UsesProgressiveScale(int volume, double gain) => Assert.Equal(gain, PlaySoundAction.Gain(volume), 6);
+
     [Fact]
     public void Segment_IsValidated_AndTranslatedToRequest()
     {
@@ -51,7 +59,7 @@ public class PlaySoundActionTests
         Assert.Empty(a.Validate());
         var r = a.ToRequest(@"C:\Data");
         Assert.Equal(@"C:\Data\assets\sounds\klaxon.wav", r.Path);
-        Assert.Equal(0.5, r.Volume);
+        Assert.Equal(0.25, r.Volume); // échelle progressive : 50 % ≈ -12 dB
         Assert.Equal(TimeSpan.FromSeconds(10), r.Start);
         Assert.Equal(TimeSpan.FromSeconds(12.5), r.End);
         Assert.Same(a, r.Owner);
@@ -158,6 +166,26 @@ public class AudioServiceTests
 
             audio.StopAll();
             Assert.Equal(0, audio.ActiveCount);
+        });
+    }
+
+    [Fact]
+    public void Volume_ChangesWhilePlaying()
+    {
+        using var dir = new TempDir();
+        var wav = dir.File("silence.wav");
+        WriteSilentWav(wav, 5);
+        RunOnDispatcher(async () =>
+        {
+            var audio = new AudioService();
+            var owner = new object();
+            await audio.PlayAsync(new SoundRequest(wav, 0.64, false, Owner: owner), CancellationToken.None);
+            Assert.Equal(0.64, audio.VolumeOf(owner)!.Value, 3);
+            audio.SetVolume(owner, 0.09);
+            Assert.Equal(0.09, audio.VolumeOf(owner)!.Value, 3);
+            audio.SetVolume(new object(), 1); // autre source : aucun effet
+            Assert.Equal(0.09, audio.VolumeOf(owner)!.Value, 3);
+            audio.StopAll();
         });
     }
 

@@ -104,6 +104,11 @@ public partial class EditorWindow : Window
         menu.IsOpen = true;
     }
 
+    private void SoundRange_Committed(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is SoundFieldViewModel sound) sound.OnRangeCommitted();
+    }
+
     private void SavePassword_Click(object sender, RoutedEventArgs e) => SavePassword();
 
     // Quitter le champ (ex. clic sur « Tester la connexion ») enregistre le mot de passe saisi.

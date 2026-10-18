@@ -25,7 +25,7 @@ public class SequenceTests
             @"launch:C:\obs\obs64.exe||C:\obs",
             "delay:5000",
             """obs:SetCurrentProgramScene {"sceneName":"Principale"}""",
-            "play:jingle.mp3@0.50",
+            "play:jingle.mp3@0.25",
         ], fake.Calls);
         Assert.All(result.Steps, s => Assert.Equal(StepStatus.Succeeded, s.Status));
     }

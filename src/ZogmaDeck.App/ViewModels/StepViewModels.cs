@@ -460,17 +460,22 @@ public sealed class ObsListFieldViewModel : FieldViewModel
     }
 }
 
-/// <summary>Fichier audio : saisie, parcourir, bibliothèque intégrée, écoute de l'extrait configuré, durée du fichier.</summary>
+/// <summary>
+/// Fichier audio : saisie, parcourir, bibliothèque intégrée, durée, choix de l'extrait (curseur à deux poignées) et écoute.
+/// Le volume et l'extrait s'appliquent aussi au son en cours d'écoute.
+/// </summary>
 public sealed class SoundFieldViewModel : FieldViewModel
 {
-    private string? _durationText;
+    private double? _duration;
     private int _durationRequest;
+    private static bool _autoPreview = true;
 
     public SoundFieldViewModel(StepViewModel owner, PropertyInfo p, FieldAttribute f) : base(owner, p, f)
     {
         BrowseFileCommand = new RelayCommand(BrowseFile);
         PreviewCommand = new AsyncCommand(PreviewAsync, ex => Warning = ex.Message);
-        StopCommand = new RelayCommand(() => Owner.Runtime.Audio.Stop(this));
+        StopCommand = new RelayCommand(() => Owner.Runtime.Audio.Stop(Owner.Model));
+        ResetSegmentCommand = new RelayCommand(() => SetSegment(0, 0), () => Sound is { } a && (a.StartSeconds > 0 || a.EndSeconds > 0));
         OpenSourceCommand = new RelayCommand(o => { if (o is string url) _ = Owner.Runtime.Shell.OpenAsync(url, CancellationToken.None); });
         RefreshWarning();
         _ = LoadDurationAsync();
@@ -479,9 +484,12 @@ public sealed class SoundFieldViewModel : FieldViewModel
     public ICommand BrowseFileCommand { get; }
     public ICommand PreviewCommand { get; }
     public ICommand StopCommand { get; }
+    public ICommand ResetSegmentCommand { get; }
     public ICommand OpenSourceCommand { get; }
     public IReadOnlyList<LibrarySound> Library => SoundLibrary.Sounds;
     public IReadOnlyList<Option> OnlineSources => SoundLibrary.OnlineSources.Select(s => new Option(s.Url, s.Name)).ToList();
+
+    private PlaySoundAction? Sound => Owner.Model as PlaySoundAction;
 
     public string Text
     {
@@ -514,12 +522,81 @@ public sealed class SoundFieldViewModel : FieldViewModel
         }
     }
 
-    public string? DurationText
+    // ----- Extrait -----
+    public bool HasDuration => _duration is > 0;
+    public double Duration => _duration ?? 1;
+
+    /// <summary>Pas des poignées et des flèches : 0,1 s (0,01 s pour un son très court).</summary>
+    public double Step => Duration < 3 ? 0.01 : 0.1;
+
+    public double RangeStart
     {
-        get => _durationText;
-        private set => Set(ref _durationText, value);
+        get => Math.Min(Sound?.StartSeconds ?? 0, Duration);
+        set => SetSegment(value, RangeEndRaw);
     }
 
+    public double RangeEnd
+    {
+        get => Sound is { EndSeconds: > 0 } a ? Math.Min(a.EndSeconds, Duration) : Duration;
+        set => SetSegment(Sound?.StartSeconds ?? 0, value);
+    }
+
+    private double RangeEndRaw => Sound?.EndSeconds ?? 0;
+
+    /// <summary>Écouter automatiquement l'extrait après chaque réglage d'une poignée.</summary>
+    public bool AutoPreview
+    {
+        get => _autoPreview;
+        set
+        {
+            _autoPreview = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string SegmentText
+    {
+        get
+        {
+            if (!HasDuration) return "Choisissez un fichier lisible pour régler l'extrait.";
+            var a = Sound!;
+            if (a.StartSeconds <= 0 && a.EndSeconds <= 0) return $"Fichier entier ({TimeFormat.Format(Math.Round(Duration, 1))}).";
+            var end = a.EndSeconds > 0 ? Math.Min(a.EndSeconds, Duration) : Duration;
+            return $"Extrait : {TimeFormat.Format(a.StartSeconds)} → {TimeFormat.Format(end)} ({end - a.StartSeconds:0.0#} s sur {TimeFormat.Format(Math.Round(Duration, 1))}).";
+        }
+    }
+
+    private void SetSegment(double start, double end)
+    {
+        if (Sound is not { } a) return;
+        var round = Step < 0.1 ? 2 : 1;
+        start = Math.Round(Math.Max(0, start), round);
+        end = Math.Round(Math.Max(0, end), round);
+        // Poignée de fin au bout du fichier = « jusqu'à la fin » (0), pour rester juste si le fichier change.
+        if (HasDuration && end >= Duration - Step / 2) end = 0;
+        if (start <= Step / 2) start = 0;
+        if (a.StartSeconds == start && a.EndSeconds == end) return;
+        a.StartSeconds = start;
+        a.EndSeconds = end;
+        Owner.OnFieldChanged();
+        RaiseSegment();
+    }
+
+    private void RaiseSegment()
+    {
+        OnPropertyChanged(nameof(RangeStart));
+        OnPropertyChanged(nameof(RangeEnd));
+        OnPropertyChanged(nameof(SegmentText));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    /// <summary>Fin d'un glissement de poignée : réécoute l'extrait si l'option est cochée.</summary>
+    public void OnRangeCommitted()
+    {
+        if (AutoPreview && HasDuration) PreviewCommand.Execute(null);
+    }
+
+    // ----- Fichier -----
     private string FullPath => ResourcePaths.Resolve(Text, Owner.Runtime.Paths.DataDirectory);
 
     private void BrowseFile()
@@ -531,13 +608,12 @@ public sealed class SoundFieldViewModel : FieldViewModel
         if (dlg.ShowDialog() == true) Text = dlg.FileName;
     }
 
-    /// <summary>Écoute avec le volume et l'extrait réglés dans l'action ; un nouveau clic relance depuis le début.</summary>
+    /// <summary>Écoute avec le volume et l'extrait réglés ; un nouveau clic relance depuis le début de l'extrait.</summary>
     private async Task PreviewAsync()
     {
         RefreshWarning();
-        var request = Owner.Model is PlaySoundAction a
-            ? a.ToRequest(Owner.Runtime.Paths.DataDirectory) with { WaitForEnd = false, Owner = this, Repeat = SoundRepeatMode.Restart }
-            : new SoundRequest(FullPath, 0.8, false, Owner: this, Repeat: SoundRepeatMode.Restart);
+        if (Sound is not { } a) return;
+        var request = a.ToRequest(Owner.Runtime.Paths.DataDirectory) with { WaitForEnd = false, Repeat = SoundRepeatMode.Restart };
         await Owner.Runtime.Audio.PlayAsync(request, CancellationToken.None);
     }
 
@@ -548,11 +624,15 @@ public sealed class SoundFieldViewModel : FieldViewModel
         TimeSpan? duration = null;
         if (path.Length > 0 && File.Exists(path)) duration = await AudioService.GetDurationAsync(path);
         if (request != _durationRequest) return; // un autre fichier a été choisi entre-temps
-        DurationText = duration is { } d ? $"Durée : {TimeFormat.Format(Math.Round(d.TotalSeconds, 1))}" : null;
+        _duration = duration?.TotalSeconds;
+        foreach (var n in new[] { nameof(HasDuration), nameof(Duration), nameof(Step) }) OnPropertyChanged(n);
+        RaiseSegment();
     }
 
+    /// <summary>Appelée après chaque modification de l'étape : le volume suit en direct le son en cours d'écoute.</summary>
     public override void RefreshWarning()
     {
+        if (Sound is { } a) Owner.Runtime.Audio.SetVolume(a, PlaySoundAction.Gain(a.Volume));
         if (string.IsNullOrWhiteSpace(Text))
         {
             Warning = null;
